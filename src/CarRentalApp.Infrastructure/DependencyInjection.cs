@@ -1,4 +1,6 @@
-﻿using CarRentalApp.Infrastructure.Data;
+﻿using CarRentalApp.Domain.Interfaces;
+using CarRentalApp.Infrastructure.Data;
+using CarRentalApp.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +23,16 @@ namespace CarRentalApp.Infrastructure
                     )
                 )
             );
+
+            // Register repositories
+            services.AddScoped<ICarRepository, CarRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IClientRepository, ClientRepository>();
+            services.AddScoped<IRentalRepository, RentalRepository>();
+            services.AddScoped<ICarPhotoRepository, CarPhotoRepository>();
+            
+            // Register Unit of Work
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Add Authorization
             services.AddAuthorization();

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CarRentalApp.Application\CarRentalApp.Application.csproj" />
     <ProjectReference Include="..\CarRentalApp.Infrastructure\CarRentalApp.Infrastructure.csproj" />
   </ItemGroup>
 
