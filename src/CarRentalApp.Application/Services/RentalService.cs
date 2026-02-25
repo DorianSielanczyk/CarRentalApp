@@ -126,7 +126,9 @@ namespace CarRentalApp.Application.Services
                 CarBrand = rental.Car?.Brand ?? string.Empty,
                 CarModel = rental.Car?.Model ?? string.Empty,
                 ClientId = rental.ClientId,
-                ClientName = rental.Client != null ? $"{rental.Client.FirstName} {rental.Client.LastName}" : string.Empty
+                ClientName = rental.Client != null ? $"{rental.Client.FirstName} {rental.Client.LastName}" : string.Empty,
+                MainPhotoUrl = rental.Car.CarPhotos?.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg",
+                PhotoUrls = rental.Car.CarPhotos?.Select(p => p.PhotoUrl).ToList() ?? new List<string>()
             };
         }
     }

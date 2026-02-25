@@ -11,6 +11,14 @@ namespace CarRentalApp.Infrastructure.Repositories
         {
         }
 
+        public override async Task<IEnumerable<Car>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(c => c.Category)
+                .Include(c => c.CarPhotos)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Car>> GetAvailableCarsAsync()
         {
             return await _dbSet

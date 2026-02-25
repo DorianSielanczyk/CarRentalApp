@@ -21,8 +21,32 @@ namespace CarRentalApp.Application.Services
 
         public async Task<IEnumerable<CarDto>> GetAvailableCarsAsync()
         {
-            var cars = await _unitOfWork.Cars.GetAvailableCarsAsync();
-            return cars.Select(MapToDto);
+            try
+            {
+                var cars = await _unitOfWork.Cars.GetAvailableCarsAsync();
+                var carsList = cars.ToList();
+                
+                Console.WriteLine($"CarService: Retrieved {carsList.Count} available cars from repository");
+                
+                if (carsList.Count > 0)
+                {
+                    var firstCar = carsList.First();
+                    Console.WriteLine($"First car: {firstCar.Brand} {firstCar.Model}");
+                    Console.WriteLine($"Category loaded: {firstCar.Category != null}");
+                    Console.WriteLine($"Photos count: {firstCar.CarPhotos?.Count ?? 0}");
+                }
+                
+                var dtos = carsList.Select(MapToDto).ToList();
+                Console.WriteLine($"CarService: Mapped to {dtos.Count} DTOs");
+                
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CarService ERROR: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
 
         public async Task<CarDto?> GetCarByIdAsync(int id)

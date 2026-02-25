@@ -2,7 +2,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 main {
@@ -11,13 +11,14 @@ main {
 
 .sidebar {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar ::deep .nav-scrollable {
-    flex: 1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 200px;
+    height: 100vh;
     overflow-y: auto;
+    z-index: 1000;
 }
 
 .top-row {
@@ -27,7 +28,6 @@ main {
     height: 3.5rem;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
 }
 
     .top-row ::deep a, .top-row ::deep .btn-link {
@@ -53,6 +53,11 @@ main {
     .top-row ::deep a, .top-row ::deep .btn-link {
         margin-left: 0;
     }
+    
+    main {
+        margin-left: 0;
+        margin-right: 0;
+    }
 }
 
 @media (min-width: 641px) {
@@ -63,8 +68,10 @@ main {
     .sidebar {
         width: 250px;
         height: 100vh;
-        position: sticky;
+        position: fixed;
         top: 0;
+        left: 0;
+        bottom: 0;
     }
 
     .top-row {
@@ -83,23 +90,17 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
-}
 
-#blazor-error-ui {
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
+    main {
+        margin-left: 250px;
     }
+}
+
+/* Mobile sidebar toggle */
+@media (max-width: 640.98px) {
+    .sidebar {
+        position: fixed;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+}

@@ -1,0 +1,137 @@
+.filter-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 500px;
+    margin-bottom: 0;
+}
+
+.car-card {
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.car-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.car-image {
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid #dee2e6;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.price-section {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+    .price-section h4 {
+        color: #292524 !important;
+    }
+
+.car-card .btn-outline-primary {
+    color: #292524;
+    border-color: #292524;
+}
+
+    .car-card .btn-outline-primary:hover {
+        background-color: #686868;
+        border-color: #686868;
+        color: white;
+    }
+
+.car-card .btn-primary {
+    background-color: #217418;
+    border-color: #217418;
+}
+
+    .car-card .btn-primary:hover {
+        background-color: #1f551a;
+        border-color: #1f551a;
+    }
+
+.badge.bg-primary {
+    background-color: #1C1917 !important;
+}
+
+.badge.bg-success {
+    background-color: #217418 !important; 
+}
+
+.badge.bg-danger {
+    background-color: #7d1212 !important; 
+}
+
+.features-section {
+    background-color: #f8f9fa;
+}
+
+.feature-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge {
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+}
+
+.form-control {
+    border-color: #292524;
+}
+
+    .form-control:focus {
+        box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem;
+    }
+
+.form-select {
+    border-color: #292524;
+}
+
+    .form-select:focus {
+        box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem;
+    }
+
+.btn:focus {
+    display: none;
+}
+
+.btn-outline-secondary {
+    color: #292524;
+    border-color: #292524;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: #686868;
+        border-color: #686868;
+        color: white;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: auto;
+        padding: 2rem 0;
+    }
+
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    
+    .filter-header {
+        padding: 0.75rem 0;
+    }
+}

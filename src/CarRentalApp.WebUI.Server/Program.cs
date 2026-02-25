@@ -1,6 +1,7 @@
 using CarRentalApp.WebUI.Server.Components;
 using CarRentalApp.Application;
 using CarRentalApp.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,9 @@ builder.Services.AddCascadingAuthenticationState();
 // Add application and infrastructure layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Blazor Bootstrap for UI components
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 

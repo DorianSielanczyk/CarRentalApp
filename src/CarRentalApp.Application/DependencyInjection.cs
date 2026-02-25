@@ -7,11 +7,11 @@ namespace CarRentalApp.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // Register application services
-            services.AddScoped<ICarService, CarService>();
-            services.AddScoped<ICategoryService, CategoryService>();
-            services.AddScoped<IClientService, ClientService>();
-            services.AddScoped<IRentalService, RentalService>();
+            // Register application services as Transient (each service call gets new instance)
+            services.AddTransient<ICarService, CarService>();
+            services.AddTransient<ICategoryService, CategoryService>();
+            services.AddTransient<IClientService, ClientService>();
+            services.AddTransient<IRentalService, RentalService>();
             
             return services;
         }
