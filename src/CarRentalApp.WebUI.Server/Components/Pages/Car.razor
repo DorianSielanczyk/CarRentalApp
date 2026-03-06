@@ -1,0 +1,206 @@
+﻿@page "/car/{carId:int}"
+@using CarRentalApp.Application.Services
+@using CarRentalApp.Application.DTOs
+@rendermode InteractiveServer
+@inject ICarService CarService
+@inject NavigationManager Navigation
+
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading car details...</p>
+    </div>
+}
+else if (car is not null)
+{
+    <div class="car-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">@car.Brand @car.Model</h3>
+                <button class="btn btn-outline-secondary back-button" @onclick="Homepage">
+                    <i class="bi bi-arrow-left"></i> Back to homepage
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="position-relative">
+                    @if (allPhotos.Count > 0)
+                    {
+                        <img src="@allPhotos[currentPhotoIndex]" class="car-detail-image" alt="@car.Brand @car.Model" />
+                        
+                        @if (allPhotos.Count > 1)
+                        {
+                            <button class="btn btn-dark photo-nav-btn photo-nav-prev" @onclick="PreviousPhoto">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-dark photo-nav-btn photo-nav-next" @onclick="NextPhoto">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                            
+                            <div class="photo-indicator">
+                                @(currentPhotoIndex + 1) / @allPhotos.Count
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="car-detail-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="bi bi-car-front-fill text-secondary" style="font-size: 4rem;"></i>
+                        </div>
+                    }
+                </div>
+
+                <div class="price-booking-section mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="text-primary mb-0 fw-bold">
+                                $@car.PricePerDay.ToString("N2")
+                                <small class="text-muted fs-6 fw-normal">/ day</small>
+                            </h4>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100" @onclick="() => BookCar(car.Id)">
+                        <i class="bi bi-calendar-check"></i> @(car.IsAvailable ? "Book Now" : "Check Availability")
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="car-info">
+                    <div class="info-item">
+                        <i class="bi bi-award"></i>
+                        <strong>Brand:</strong>
+                        <span>@car.Brand</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-car-front"></i>
+                        <strong>Model:</strong>
+                        <span>@car.Model</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-card-text"></i>
+                        <strong>Registration Number:</strong>
+                        <span>@car.RegistrationNumber</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-calendar3"></i>
+                        <strong>Year of Production:</strong>
+                        <span>@car.YearOfProduction</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-speedometer2"></i>
+                        <strong>Mileage:</strong>
+                        <span>@car.Mileage.ToString("N0") km</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-tag"></i>
+                        <strong>Category:</strong>
+                        <span>@car.CategoryName</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Availability:</strong>
+                        <span class="@(car.IsAvailable ? "text-success" : "text-danger")">
+                            @(car.IsAvailable ? "Available" : "Rented")
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container my-4">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Not Found:</strong> The requested car could not be found.
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int CarId { get; set; }
+
+    private bool isLoading = true;
+    private CarDto? car;
+    private List<string> allPhotos = new();
+    private int currentPhotoIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCar();
+    }
+
+    private async Task LoadCar()
+    {
+        isLoading = true;
+
+        try
+        {
+            car = await CarService.GetCarByIdAsync(CarId);
+            
+            if (car != null)
+            {
+                allPhotos = new List<string>();
+                
+                if (!string.IsNullOrEmpty(car.MainPhotoUrl))
+                {
+                    allPhotos.Add(car.MainPhotoUrl);
+                }
+                
+                if (car.PhotoUrls != null && car.PhotoUrls.Count > 0)
+                {
+                    allPhotos.AddRange(car.PhotoUrls.Where(url => url != car.MainPhotoUrl));
+                }
+            }
+        }
+        catch
+        {
+            Navigation.NavigateTo("/");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NextPhoto()
+    {
+        if (allPhotos.Count > 0)
+        {
+            currentPhotoIndex = (currentPhotoIndex + 1) % allPhotos.Count;
+        }
+    }
+
+    private void PreviousPhoto()
+    {
+        if (allPhotos.Count > 0)
+        {
+            currentPhotoIndex = currentPhotoIndex == 0 ? allPhotos.Count - 1 : currentPhotoIndex - 1;
+        }
+    }
+
+    private void SelectPhoto(int index)
+    {
+        currentPhotoIndex = index;
+    }
+
+    private void Homepage()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private void BookCar(int carId)
+    {
+        Navigation.NavigateTo($"/booking/{carId}");
+    }
+}

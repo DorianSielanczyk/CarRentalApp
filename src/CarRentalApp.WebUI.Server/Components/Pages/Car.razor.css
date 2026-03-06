@@ -1,0 +1,143 @@
+﻿.car-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.back-button {
+    color: #292524;
+    border-color: #292524;
+}
+
+.back-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.car-detail-image {
+    width: 100%;
+    height: 450px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.photo-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+    padding: 0.5rem 0.75rem;
+}
+
+.photo-nav-btn:hover {
+    opacity: 1;
+}
+
+.photo-nav-prev {
+    left: 10px;
+}
+
+.photo-nav-next {
+    right: 10px;
+}
+
+.photo-indicator {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    z-index: 10;
+}
+
+.photo-thumbnails {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.thumbnail:hover {
+    opacity: 0.8;
+}
+
+.thumbnail.active {
+    opacity: 1;
+    border-color: #217418;
+}
+
+.car-info {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item i {
+    font-size: 1.5rem;
+    color: #292524;
+    min-width: 30px;
+}
+
+.info-item strong {
+    min-width: 180px;
+    color: #292524;
+}
+
+.info-item span {
+    color: #6c757d;
+}
+
+.price-booking-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.price-booking-section .btn-primary {
+    background-color: #217418;
+    border-color: #217418;
+}
+
+.price-booking-section .btn-primary:hover {
+    background-color: #1f551a;
+    border-color: #1f551a;
+}
+
+.price-booking-section h4 {
+    color: #292524 !important;
+}

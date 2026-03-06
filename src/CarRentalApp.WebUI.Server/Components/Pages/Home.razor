@@ -115,7 +115,7 @@
                                     <span><i class="bi bi-speedometer2"></i> @car.Mileage.ToString("N0") km</span>
                                 </div>
                                 <div>
-                                    <span><i class="bi bi-123"></i> @car.RegistrationNumber</span>
+                                    <span><i class="bi bi-card-text"></i> @car.RegistrationNumber</span>
                                 </div>
                             </div>
 
@@ -132,7 +132,7 @@
                                 </button>
                                 <button class="btn btn-primary btn-sm"
                                         @onclick="() => BookCar(car.Id)">
-                                    <i class="bi bi-calendar-check"></i> @(car.IsAvailable ? "Zarezerwuj" : "Sprawdź dostępność")
+                                    <i class="bi bi-calendar-check"></i> @(car.IsAvailable ? "Book now" : "Check availability")
                                 </button>
                             </div>
                         </div>
