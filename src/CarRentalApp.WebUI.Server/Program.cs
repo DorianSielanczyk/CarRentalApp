@@ -1,6 +1,7 @@
-using CarRentalApp.WebUI.Server.Components;
 using CarRentalApp.Application;
 using CarRentalApp.Infrastructure;
+using CarRentalApp.Infrastructure.Data;
+using CarRentalApp.WebUI.Server.Components;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,27 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
+
+// Initialize database with seed data
+var useMockDatabase = builder.Configuration.GetValue<bool>("UseMockDatabase");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    
+    if (useMockDatabase)
+    {
+        // For in-memory database
+        context.Database.EnsureCreated();
+        app.Logger.LogInformation("Using In-Memory database with mock data");
+    }
+    else
+    {
+        // For Azure SQL Database
+        DbInitializer.Initialize(context);
+        app.Logger.LogInformation("Using Azure SQL Database");
+    }
+}
 
 // Configure HTTP request pipeline
 if (!app.Environment.IsDevelopment())
