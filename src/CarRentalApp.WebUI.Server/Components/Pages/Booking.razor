@@ -1,8 +1,282 @@
 ﻿@page "/booking/{carId:int}"
+@using CarRentalApp.Application.Services
+@using CarRentalApp.Application.DTOs
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Authorization
+@using CarRentalApp.WebUI.Server.Components.Dialogs
+@rendermode InteractiveServer
+@inject ICarService CarService
+@inject IRentalService RentalService
+@inject IClientService ClientService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDialogService DialogService
 
-<h3>booking</h3>
+@if (isLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading car details...</p>
+    </div>
+}
+else if (car is not null)
+{
+    <div class="car-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Book @car.Brand @car.Model</h3>
+                <button class="btn btn-outline-secondary back-button" @onclick="Homepage">
+                    <i class="bi bi-arrow-left"></i> Back to homepage
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="position-relative">
+                    @if (allPhotos.Count > 0)
+                    {
+                        <img src="@allPhotos[currentPhotoIndex]" class="car-detail-image" alt="@car.Brand @car.Model" />
+
+                        @if (allPhotos.Count > 1)
+                        {
+                            <button class="btn btn-dark photo-nav-btn photo-nav-prev" @onclick="PreviousPhoto">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-dark photo-nav-btn photo-nav-next" @onclick="NextPhoto">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+
+                            <div class="photo-indicator">
+                                @(currentPhotoIndex + 1) / @allPhotos.Count
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="car-detail-image bg-light d-flex align-items-center justify-content-center">
+                            <i class="bi bi-car-front-fill text-secondary" style="font-size: 4rem;"></i>
+                        </div>
+                    }
+                </div>
+
+                <div class="price-booking-section mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="text-primary mb-0 fw-bold">
+                                @if (totalDays > 0)
+                                {
+                                    <text>$@totalPrice.ToString("N2")</text>
+                                    <small class="text-muted fs-6 fw-normal"> for @totalDays day(s)</small>
+                                }
+                                else
+                                {
+                                    <text>$@car.PricePerDay.ToString("N2")</text>
+                                    <small class="text-muted fs-6 fw-normal"> / day</small>
+                                }
+                            </h4>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100" 
+                            @onclick="ConfirmBooking" 
+                            disabled="@(totalDays == 0)">
+                        <i class="bi bi-calendar-check"></i>
+                        <text> @(totalDays > 0 ? "Confirm Booking" : "Select Dates")</text>
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="calendar-container">
+                    <MudDateRangePicker PickerVariant="PickerVariant.Static" 
+                                        DateRange="@_dateRange"
+                                        DateRangeChanged="@OnDateRangeChanged"
+                                        IsDateDisabledFunc="@IsDateDisabled"
+                                        Elevation="2"
+                                        MinDate="@DateTime.Today"
+                                        AutoClose="false" />
+                    
+                    @if (existingRentals.Any())
+                    {
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <h6 class="mb-2"><i class="bi bi-info-circle"></i> Unavailable Dates:</h6>
+                            <ul class="mb-0 small">
+                                @foreach (var rental in existingRentals.OrderBy(r => r.RentalDate))
+                                {
+                                    <li>@rental.RentalDate.ToString("MMM dd, yyyy") - @rental.ReturnDate.ToString("MMM dd, yyyy")</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
     public int CarId { get; set; }
+
+    private bool isLoading = true;
+    private CarDto? car;
+    private List<string> allPhotos = new();
+    private int currentPhotoIndex = 0;
+    private DateRange? _dateRange { get; set; }
+    private List<RentalDto> existingRentals = new();
+    private int totalDays = 0;
+    private decimal totalPrice = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCar();
+        await LoadExistingRentals();
+    }
+
+    private async Task LoadCar()
+    {
+        isLoading = true;
+
+        try
+        {
+            car = await CarService.GetCarByIdAsync(CarId);
+
+            if (car != null)
+            {
+                allPhotos = new List<string>();
+
+                if (!string.IsNullOrEmpty(car.MainPhotoUrl))
+                {
+                    allPhotos.Add(car.MainPhotoUrl);
+                }
+
+                if (car.PhotoUrls != null && car.PhotoUrls.Count > 0)
+                {
+                    allPhotos.AddRange(car.PhotoUrls.Where(url => url != car.MainPhotoUrl));
+                }
+            }
+        }
+        catch
+        {
+            Navigation.NavigateTo("/");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadExistingRentals()
+    {
+        try
+        {
+            var rentals = await RentalService.GetRentalsByCarIdAsync(CarId);
+            existingRentals = rentals
+                .Where(r => r.Status != "Cancelled" && r.ReturnDate >= DateTime.Today)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading rentals: {ex.Message}");
+        }
+    }
+
+    private bool IsDateDisabled(DateTime date)
+    {
+        // Disable past dates
+        if (date < DateTime.Today)
+            return true;
+
+        // Check if date falls within any existing rental period
+        foreach (var rental in existingRentals)
+        {
+            if (date >= rental.RentalDate.Date && date <= rental.ReturnDate.Date)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void OnDateRangeChanged(DateRange? dateRange)
+    {
+        _dateRange = dateRange;
+        
+        if (dateRange?.Start != null && dateRange?.End != null && car != null)
+        {
+            totalDays = (dateRange.End.Value - dateRange.Start.Value).Days + 1;
+            totalPrice = car.PricePerDay * totalDays;
+        }
+        else
+        {
+            totalDays = 0;
+            totalPrice = 0;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ConfirmBooking()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            await OpenLoginDialogAsync();
+            return;
+        }
+
+        // TODO: Implement booking confirmation logic for authenticated users
+    }
+
+    private async Task OpenLoginDialogAsync()
+    {
+        var parameters = new DialogParameters<LoginDialog>
+        {
+            { x => x.ReturnUrl, $"/booking/{CarId}" }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            CloseButton = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<LoginDialog>("Login Required", parameters, options);
+        var result = await dialog.Result;
+
+        // Optional: handle dialog result
+        if (!result.Canceled)
+        {
+            // User clicked Login
+            Console.WriteLine("User chose to login");
+        }
+    }
+
+    private void NextPhoto()
+    {
+        if (allPhotos.Count > 0)
+        {
+            currentPhotoIndex = (currentPhotoIndex + 1) % allPhotos.Count;
+        }
+    }
+
+    private void PreviousPhoto()
+    {
+        if (allPhotos.Count > 0)
+        {
+            currentPhotoIndex = currentPhotoIndex == 0 ? allPhotos.Count - 1 : currentPhotoIndex - 1;
+        }
+    }
+
+    private void Homepage()
+    {
+        Navigation.NavigateTo("/");
+    }
 }

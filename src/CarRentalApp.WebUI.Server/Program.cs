@@ -3,6 +3,7 @@ using CarRentalApp.Infrastructure;
 using CarRentalApp.Infrastructure.Data;
 using CarRentalApp.WebUI.Server.Components;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +18,9 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Blazor Bootstrap for UI components
+// Blazor libraries
 builder.Services.AddBlazorBootstrap();
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 

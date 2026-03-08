@@ -1,4 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider @rendermode="InteractiveServer" />
+<MudDialogProvider @rendermode="InteractiveServer" />
+<MudSnackbarProvider @rendermode="InteractiveServer" />
 
 <div class="page">
     <div class="sidebar">

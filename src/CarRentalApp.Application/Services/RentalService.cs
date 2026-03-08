@@ -112,6 +112,12 @@ namespace CarRentalApp.Application.Services
             return true;
         }
 
+        public async Task<IEnumerable<RentalDto>> GetRentalsByCarIdAsync(int carId)
+        {
+            var rentals = await _unitOfWork.Rentals.GetRentalsByCarIdAsync(carId);
+            return rentals.Select(MapToDto);
+        }
+
         private static RentalDto MapToDto(Rental rental)
         {
             return new RentalDto
