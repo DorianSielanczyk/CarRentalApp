@@ -22,17 +22,13 @@
 }
 
 .nav-scrollable {
-    background-color: #292524;
+    background-color: #292521;
 }
 
 .navbar-brand {
     font-size: 1.1rem;
     font-weight: 600;
     color: white !important;
-}
-
-.navbar-brand:hover {
-    color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .bi {

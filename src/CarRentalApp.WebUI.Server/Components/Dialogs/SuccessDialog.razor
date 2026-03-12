@@ -1,54 +1,55 @@
 @using MudBlazor
-@inject NavigationManager Navigation
 
 <MudDialog Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
     <TitleContent>
-        <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+         <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
             <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
-                <MudIcon Icon="@Icons.Material.Filled.Lock" Class="me-2" />
-                Login Required
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Class="me-2" Style="color: white;" />
+                Booking Confirmed!
             </MudText>
         </div>
     </TitleContent>
     <DialogContent>
         <div class="text-center py-4">
-            <MudIcon Icon="@Icons.Material.Filled.Lock" 
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
                      Size="Size.Large"
                      Style="font-size: 4rem; color: white" />
             <MudText Typo="Typo.body1" Class="mt-3" Style="color: rgba(255, 255, 255, 0.9);">
-                You must be logged in to make a reservation.
+                Your booking for @CarBrand @CarModel has been confirmed!
             </MudText>
         </div>
     </DialogContent>
     <DialogActions>
-            <MudButton Color="Color.Error" 
+            <MudButton Color="Color.Default"
                        Variant="Variant.Text"
-                       OnClick="Cancel"
+                       OnClick="StayHere"
                        Style="color: #dc3545; text-transform: uppercase; font-weight: 500;">
-                Cancel
+                Stay Here
             </MudButton>
             <MudButton Color="Color.Success"
                        Variant="Variant.Filled"
-                       StartIcon="@Icons.Material.Filled.Login"
-                       OnClick="GoToLogin"
+                       StartIcon="@Icons.Material.Filled.Article"
+                       OnClick="ViewRentals"
                        Style="background-color: #217418; color: white; text-transform: uppercase; font-weight: 500;">
-                Login
+                View My Rentals
             </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public string ReturnUrl { get; set; } = "/";
+    public int RentalId { get; set; }
 
-    private void Cancel() => MudDialog.Cancel();
+    [Parameter]
+    public string CarBrand { get; set; } = string.Empty;
 
-    private void GoToLogin()
-    {
-        MudDialog.Close(DialogResult.Ok(true));
-        Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
-    }
-}
+    [Parameter]
+    public string CarModel { get; set; } = string.Empty;
+
+    private void ViewRentals() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void StayHere() => MudDialog.Close(DialogResult.Ok(false));
+}   

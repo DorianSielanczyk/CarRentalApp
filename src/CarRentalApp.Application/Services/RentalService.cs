@@ -39,13 +39,20 @@ namespace CarRentalApp.Application.Services
 
         public async Task<int> CreateRentalAsync(CreateRentalDto rentalDto)
         {
-            // Business logic: Verify car is available
             var car = await _unitOfWork.Cars.GetByIdAsync(rentalDto.CarId);
-            if (car == null || !car.IsAvailable)
-                throw new InvalidOperationException("Car is not available for rental");
+            if (car == null)
+                throw new InvalidOperationException("Car not found");
 
-            // Business logic: Calculate total cost
-            var days = (rentalDto.ReturnDate - rentalDto.RentalDate).Days;
+            var existingRentals = await _unitOfWork.Rentals.GetRentalsByCarIdAsync(rentalDto.CarId);
+            var hasOverlap = existingRentals.Any(r =>
+                r.Status != "Cancelled" &&
+                r.RentalDate.Date <= rentalDto.ReturnDate.Date &&
+                r.ReturnDate.Date >= rentalDto.RentalDate.Date);
+
+            if (hasOverlap)
+                throw new InvalidOperationException("Selected dates are not available");
+
+            var days = (rentalDto.ReturnDate - rentalDto.RentalDate).Days + 1;
             var totalCost = days * car.PricePerDay;
 
             var rental = new Rental
@@ -60,13 +67,14 @@ namespace CarRentalApp.Application.Services
             };
 
             await _unitOfWork.Rentals.AddAsync(rental);
-            
-            // Business logic: Mark car as unavailable
-            car.IsAvailable = false;
+
+            var today = DateTime.Today;
+            var isRentedToday = rental.RentalDate.Date <= today && rental.ReturnDate.Date >= today;
+            car.IsAvailable = !isRentedToday;
             _unitOfWork.Cars.Update(car);
-            
+
             await _unitOfWork.SaveChangesAsync();
-            
+
             return rental.Id;
         }
 
@@ -79,7 +87,6 @@ namespace CarRentalApp.Application.Services
             rental.Status = "Completed";
             _unitOfWork.Rentals.Update(rental);
 
-            // Make car available again
             var car = await _unitOfWork.Cars.GetByIdAsync(rental.CarId);
             if (car != null)
             {
@@ -100,7 +107,6 @@ namespace CarRentalApp.Application.Services
             rental.Status = "Cancelled";
             _unitOfWork.Rentals.Update(rental);
 
-            // Make car available again
             var car = await _unitOfWork.Cars.GetByIdAsync(rental.CarId);
             if (car != null)
             {

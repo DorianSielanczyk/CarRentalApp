@@ -11,10 +11,7 @@ namespace CarRentalApp.Domain.Entities
         public int Id { get; set; }
         public string PhotoUrl { get; set; } = string.Empty;
         public bool IsMain { get; set; } 
-
-        // Foreign key for Car
         public int CarId { get; set; }
-        // Navigation property for Car
         public Car? Car { get; set; }
     }
 }

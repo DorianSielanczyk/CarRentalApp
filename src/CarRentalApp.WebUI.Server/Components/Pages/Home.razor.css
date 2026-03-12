@@ -120,7 +120,6 @@
         color: white;
     }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .hero-section {
         min-height: auto;

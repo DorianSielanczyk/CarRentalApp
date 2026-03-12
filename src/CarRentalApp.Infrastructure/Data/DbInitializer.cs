@@ -13,7 +13,6 @@ namespace CarRentalApp.Infrastructure.Data
 
         public static void SeedData(ModelBuilder modelBuilder)
         {
-            // Seed Roles
             var userRole = new IdentityRole
             {
                 Id = "role-user-id",
@@ -40,7 +39,6 @@ namespace CarRentalApp.Infrastructure.Data
 
             modelBuilder.Entity<IdentityRole>().HasData(userRole, workerRole, adminRole);
 
-            // Seed Identity Users
             var hasher = new PasswordHasher<IdentityUser>();
 
             var userAccount = new IdentityUser
@@ -84,14 +82,12 @@ namespace CarRentalApp.Infrastructure.Data
 
             modelBuilder.Entity<IdentityUser>().HasData(userAccount, workerAccount, adminAccount);
 
-            // Assign Roles to Users
             modelBuilder.Entity<IdentityUserRole<string>>().HasData(
                 new IdentityUserRole<string> { RoleId = userRole.Id, UserId = userAccount.Id },
                 new IdentityUserRole<string> { RoleId = workerRole.Id, UserId = workerAccount.Id },
                 new IdentityUserRole<string> { RoleId = adminRole.Id, UserId = adminAccount.Id }
             );
 
-            // Seed Categories
             modelBuilder.Entity<Category>().HasData(
                 new Category { Id = 1, Name = "Economy", Description = "Affordable and fuel-efficient cars." },
                 new Category { Id = 2, Name = "SUV", Description = "Spacious and comfortable SUVs." },
@@ -100,7 +96,6 @@ namespace CarRentalApp.Infrastructure.Data
                 new Category { Id = 5, Name = "Van", Description = "Large capacity vans for groups." }
             );
 
-            // Seed Cars
             modelBuilder.Entity<Car>().HasData(
                 new Car { Id = 1, Brand = "Toyota", Model = "Corolla", RegistrationNumber = "ABC123", YearOfProduction = 2022, PricePerDay = 50.00m, Mileage = 15000, IsAvailable = true, CategoryId = 1 },
                 new Car { Id = 2, Brand = "Honda", Model = "Civic", RegistrationNumber = "DEF456", YearOfProduction = 2023, PricePerDay = 55.00m, Mileage = 8000, IsAvailable = true, CategoryId = 1 },
@@ -112,19 +107,16 @@ namespace CarRentalApp.Infrastructure.Data
                 new Car { Id = 8, Brand = "Mercedes-Benz", Model = "Sprinter", RegistrationNumber = "VWX234", YearOfProduction = 2021, PricePerDay = 100.00m, Mileage = 40000, IsAvailable = true, CategoryId = 5 }
             );
 
-            // Seed Clients
             modelBuilder.Entity<Client>().HasData(
                 new Client { Id = 1, FirstName = "John", LastName = "Doe", DriverLicense = "DL123456", UserId = "user-customer-id" },
                 new Client { Id = 2, FirstName = "Worker", LastName = "Worker", DriverLicense = "DL345678", UserId = "user-worker-id" },
                 new Client { Id = 3, FirstName = "Admin", LastName = "Admin", DriverLicense = "DL901234", UserId = "user-admin-id" }
             );
 
-            // Seed Rentals
             modelBuilder.Entity<Rental>().HasData(
                 new Rental { Id = 1, RentalDate = new DateTime(2026, 2, 10), ReturnDate = new DateTime(2026, 2, 15), TotalCost = 800.00m, Status = "Active", IsPaid = true, CarId = 6, ClientId = 1 }
             );
 
-            // Seed CarPhotos
             modelBuilder.Entity<CarPhoto>().HasData(
                 new CarPhoto { Id = 1, PhotoUrl = "/images/cars/toyota-corolla-1.jpg", IsMain = true, CarId = 1 },
                 new CarPhoto { Id = 2, PhotoUrl = "/images/cars/toyota-corolla-2.jpg", IsMain = false, CarId = 1 },

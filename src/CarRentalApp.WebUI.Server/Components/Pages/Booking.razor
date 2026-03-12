@@ -81,8 +81,8 @@ else if (car is not null)
                             </h4>
                         </div>
                     </div>
-                    <button class="btn btn-primary w-100" 
-                            @onclick="ConfirmBooking" 
+                    <button class="btn btn-primary w-100"
+                            @onclick="ConfirmBooking"
                             disabled="@(totalDays == 0)">
                         <i class="bi bi-calendar-check"></i>
                         <text> @(totalDays > 0 ? "Confirm Booking" : "Select Dates")</text>
@@ -91,27 +91,16 @@ else if (car is not null)
             </div>
 
             <div class="col-md-8">
-                <div class="calendar-container">
-                    <MudDateRangePicker PickerVariant="PickerVariant.Static" 
+                <div class="calendar-container mx-auto">
+                    <MudDateRangePicker PickerVariant="PickerVariant.Static"
                                         DateRange="@_dateRange"
                                         DateRangeChanged="@OnDateRangeChanged"
                                         IsDateDisabledFunc="@IsDateDisabled"
                                         Elevation="2"
                                         MinDate="@DateTime.Today"
-                                        AutoClose="false" />
-                    
-                    @if (existingRentals.Any())
-                    {
-                        <div class="mt-3 p-3 bg-light rounded">
-                            <h6 class="mb-2"><i class="bi bi-info-circle"></i> Unavailable Dates:</h6>
-                            <ul class="mb-0 small">
-                                @foreach (var rental in existingRentals.OrderBy(r => r.RentalDate))
-                                {
-                                    <li>@rental.RentalDate.ToString("MMM dd, yyyy") - @rental.ReturnDate.ToString("MMM dd, yyyy")</li>
-                                }
-                            </ul>
-                        </div>
-                    }
+                                        AutoClose="false"
+                                        FixedDay="@DateTime.Today"
+                                        Culture="@(new System.Globalization.CultureInfo("en-US"))" />
                 </div>
             </div>
         </div>
@@ -187,11 +176,9 @@ else if (car is not null)
 
     private bool IsDateDisabled(DateTime date)
     {
-        // Disable past dates
         if (date < DateTime.Today)
             return true;
 
-        // Check if date falls within any existing rental period
         foreach (var rental in existingRentals)
         {
             if (date >= rental.RentalDate.Date && date <= rental.ReturnDate.Date)
@@ -204,7 +191,7 @@ else if (car is not null)
     private void OnDateRangeChanged(DateRange? dateRange)
     {
         _dateRange = dateRange;
-        
+
         if (dateRange?.Start != null && dateRange?.End != null && car != null)
         {
             totalDays = (dateRange.End.Value - dateRange.Start.Value).Days + 1;
@@ -230,7 +217,8 @@ else if (car is not null)
             return;
         }
 
-        // TODO: Implement booking confirmation logic for authenticated users
+        await OpenConfirmationDialogAsync();
+        return;
     }
 
     private async Task OpenLoginDialogAsync()
@@ -240,9 +228,9 @@ else if (car is not null)
             { x => x.ReturnUrl, $"/booking/{CarId}" }
         };
 
-        var options = new DialogOptions 
-        { 
-            CloseOnEscapeKey = true, 
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
             CloseButton = false,
             MaxWidth = MaxWidth.Small,
             FullWidth = true
@@ -251,12 +239,116 @@ else if (car is not null)
         var dialog = await DialogService.ShowAsync<LoginDialog>("Login Required", parameters, options);
         var result = await dialog.Result;
 
-        // Optional: handle dialog result
         if (!result.Canceled)
         {
-            // User clicked Login
             Console.WriteLine("User chose to login");
         }
+    }
+
+    private async Task OpenConfirmationDialogAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userName = user.Identity?.Name ?? "Unknown User";
+
+        var parameters = new DialogParameters<ConfirmationDialog>
+        {
+            { x => x.UserName, userName },
+            { x => x.CarBrand, car!.Brand },
+            { x => x.CarModel, car!.Model },
+            { x => x.StartDate, _dateRange!.Start!.Value },
+            { x => x.EndDate, _dateRange!.End!.Value },
+            { x => x.TotalPrice, totalPrice },
+            { x => x.CarId, CarId },
+            { x => x.ReturnUrl, $"/booking/{CarId}" }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            CloseButton = false,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Booking Summary", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var client = await ClientService.GetClientByUserIdAsync(userId);
+
+                var createRentalDto = new CreateRentalDto
+                {
+                    CarId = CarId,
+                    ClientId = client.Id,
+                    RentalDate = _dateRange!.Start!.Value,
+                    ReturnDate = _dateRange!.End!.Value,
+                    IsPaid = true // (payment methods are skipped in this project)
+                };
+
+                var rentalId = await RentalService.CreateRentalAsync(createRentalDto);
+
+                _dateRange = null;
+                totalDays = 0;
+                totalPrice = 0;
+
+                await LoadExistingRentals();
+
+                await ShowSuccessDialog(rentalId);
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialog($"Failed to create booking: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ShowSuccessDialog(int rentalId)
+    {
+        var parameters = new DialogParameters<SuccessDialog>
+        {
+            { x => x.RentalId, rentalId },
+            { x => x.CarBrand, car!.Brand },
+            { x => x.CarModel, car!.Model }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            CloseButton = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<SuccessDialog>("", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is bool viewRentals && viewRentals)
+        {
+            Navigation.NavigateTo("/my-rentals");
+        }
+    }
+
+    private async Task ShowErrorDialog(string errorMessage)
+    {
+        var parameters = new DialogParameters<ErrorDialog>
+        {
+            { x => x.ErrorMessage, errorMessage }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            CloseButton = false,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<ErrorDialog>("", parameters, options);
     }
 
     private void NextPhoto()

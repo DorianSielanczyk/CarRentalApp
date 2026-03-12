@@ -148,6 +148,7 @@
     padding: 1rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     height: fit-content;
+    max-width: 750px;
 }
 
 ::deep .calendar-container .mud-picker-calendar-container {
@@ -204,3 +205,30 @@
 ::deep .mud-picker-calendar-day[disabled] p {
     color: #9e9e9e !important;
 }
+
+::deep .mud-theme-primary {
+    background-color: #292521 !important;
+}
+
+::deep .mud-range-selection-primary:hover {
+    background-color: #292521 !important;
+}
+
+::deep .mud-button-outlined.mud-button-outlined-primary {
+    border: solid 1px#292521!important;
+}
+
+::deep .mud-button-outlined.mud-button-outlined-primary p {
+    color: #292521 !important;
+}
+
+::deep .mud-primary-text {
+    color: #292521 !important;
+}
+
+.price-booking-section .btn-primary[b-47gpcnddyt]:focus {
+    box-shadow: none;
+}
+
+
+

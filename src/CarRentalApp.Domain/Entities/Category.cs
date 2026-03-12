@@ -11,8 +11,6 @@ namespace CarRentalApp.Domain.Entities
         public int Id { get; set; } 
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-
-        // Navigation property for related cars
         public ICollection<Car> Cars { get; set; } = new List<Car>();
     }
 }

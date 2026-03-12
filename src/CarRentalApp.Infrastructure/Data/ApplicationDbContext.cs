@@ -20,11 +20,7 @@ namespace CarRentalApp.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Configure relationships
             ConfigureRelationships(modelBuilder);
-
-            // Seed data
             DbInitializer.SeedData(modelBuilder);
         }
 

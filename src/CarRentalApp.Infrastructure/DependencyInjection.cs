@@ -15,17 +15,14 @@ namespace CarRentalApp.Infrastructure
         {
             var useMockDatabase = configuration.GetValue<bool>("UseMockDatabase");
 
-            // Register DbContext based on configuration
             if (useMockDatabase)
             {
-                // Use In-Memory database for testing/demo purposes
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("CarRentalInMemoryDb")
                 );
             }
             else
             {
-                // Register DbContext with retry logic for Azure SQL Database
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseSqlServer(
                         configuration.GetConnectionString("DefaultConnection"),
@@ -38,40 +35,31 @@ namespace CarRentalApp.Infrastructure
                 );
             }
 
-            // Register repositories
             services.AddScoped<ICarRepository, CarRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<IRentalRepository, RentalRepository>();
             services.AddScoped<ICarPhotoRepository, CarPhotoRepository>();
             
-            // Register Unit of Work
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // Add Authorization
             services.AddAuthorization();
-
-            // Add Identity for Blazor Server
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
-                // Sign-in settings
                 options.SignIn.RequireConfirmedAccount = false;
 
-                // Password settings
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 8;
 
-                // User settings
                 options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-            // Configure application cookies
             services.ConfigureApplicationCookie(options =>
             {
                 options.Cookie.HttpOnly = true;

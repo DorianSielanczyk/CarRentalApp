@@ -73,7 +73,6 @@ namespace CarRentalApp.Application.Services
             if (car == null)
                 return false;
 
-            // Update properties
             car.Brand = carDto.Brand;
             car.Model = carDto.Model;
             car.RegistrationNumber = carDto.RegistrationNumber;
@@ -113,10 +112,14 @@ namespace CarRentalApp.Application.Services
             
             return true;
         }
-
-        // Helper method to map Entity to DTO
         private static CarDto MapToDto(Car car)
         {
+            var today = DateTime.Today;
+            var isRentedToday = car.Rentals?.Any(r =>
+                r.Status != "Cancelled" &&
+                r.RentalDate.Date <= today &&
+                r.ReturnDate.Date >= today) ?? false;
+
             return new CarDto
             {
                 Id = car.Id,
@@ -126,7 +129,7 @@ namespace CarRentalApp.Application.Services
                 YearOfProduction = car.YearOfProduction,
                 PricePerDay = car.PricePerDay,
                 Mileage = car.Mileage,
-                IsAvailable = car.IsAvailable,
+                IsAvailable = car.Rentals != null && car.Rentals.Count > 0 ? !isRentedToday : car.IsAvailable,
                 CategoryId = car.CategoryId,
                 CategoryName = car.Category?.Name ?? string.Empty,
                 MainPhotoUrl = car.CarPhotos.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg",

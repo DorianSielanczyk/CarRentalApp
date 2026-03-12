@@ -1,0 +1,123 @@
+﻿@using MudBlazor
+
+<MudDialog Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <TitleContent>
+        <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
+                <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Class="me-2" />
+                Booking Summary
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mt-4 text-center" Style="color: rgba(255, 255, 255, 0.7);">
+            Please review the details below before confirming your booking.
+        </MudText>
+        <div class="py-4">
+            <MudPaper Elevation="0" Style="background-color: rgba(255, 255, 255, 0.05); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <MudText Typo="Typo.h6" Class="mb-3" Style="color: rgba(255, 255, 255, 0.9); font-weight: 600;">
+                    Booking Details
+                </MudText>
+                
+                <MudGrid Spacing="2">
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Customer Name</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(string.IsNullOrEmpty(UserName) ? "N/A" : UserName)</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudDivider Style="background-color: rgba(255, 255, 255, 0.1);" />
+                    </MudItem>
+                    
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Brand</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(string.IsNullOrEmpty(CarBrand) ? "N/A" : CarBrand)</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Model</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(string.IsNullOrEmpty(CarModel) ? "N/A" : CarModel)</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudDivider Style="background-color: rgba(255, 255, 255, 0.1);" />
+                    </MudItem>
+                    
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Pickup Date</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(StartDate == default ? "N/A" : StartDate.ToString("MMM dd, yyyy"))</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Return Date</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(EndDate == default ? "N/A" : EndDate.ToString("MMM dd, yyyy"))</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudDivider Style="background-color: rgba(255, 255, 255, 0.1);" />
+                    </MudItem>
+                    
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Total Days</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@TotalDays day@(TotalDays != 1 ? "s" : "")</MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="6" Class="text-right">
+                        <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Total Price</MudText>
+                        <MudText Typo="Typo.h6" Style="color: #4ade80; font-weight: 600;">$@TotalPrice.ToString("N2")</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Text"
+                   OnClick="Cancel"
+                   Style="color: #dc3545; text-transform: uppercase; font-weight: 500;">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Login"
+                   OnClick="Submit"
+                   Style="background-color: #217418; color: white; text-transform: uppercase; font-weight: 500;">
+            Confirm
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string UserName { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CarBrand { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CarModel { get; set; } = string.Empty;
+
+    [Parameter]
+    public DateTime StartDate { get; set; }
+
+    [Parameter]
+    public DateTime EndDate { get; set; }
+
+    [Parameter]
+    public decimal TotalPrice { get; set; }
+
+    [Parameter]
+    public int CarId { get; set; }
+
+    [Parameter]
+    public string ReturnUrl { get; set; } = "/";
+
+    private int TotalDays => StartDate != default && EndDate != default ? (EndDate - StartDate).Days + 1 : 0;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}

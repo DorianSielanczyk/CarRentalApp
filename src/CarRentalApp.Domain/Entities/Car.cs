@@ -16,11 +16,7 @@ namespace CarRentalApp.Domain.Entities
         public decimal PricePerDay { get; set; }
         public int Mileage { get; set; }
         public bool IsAvailable { get; set; }
-
-        // Foreign key for Category
         public int CategoryId { get; set; }
-
-        // Navigation property for Category
         public Category? Category { get; set; } 
         public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
         public ICollection<CarPhoto> CarPhotos { get; set; } = new List<CarPhoto>();
