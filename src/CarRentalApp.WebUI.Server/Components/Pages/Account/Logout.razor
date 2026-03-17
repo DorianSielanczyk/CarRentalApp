@@ -1,14 +1,20 @@
 @page "/logout"
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@inject IJSRuntime JS
 
 <h3>Wylogowywanie...</h3>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    private bool _redirected;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await SignInManager.SignOutAsync();
-        Navigation.NavigateTo("/", true);
+        if (!firstRender || _redirected)
+        {
+            return;
+        }
+
+        _redirected = true;
+        await JS.InvokeVoidAsync("eval", "window.location.replace('/auth/logout')");
     }
 }

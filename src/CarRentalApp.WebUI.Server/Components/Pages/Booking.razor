@@ -273,8 +273,28 @@ else if (car is not null)
         {
             try
             {
+                authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                user = authState.User;
+
+                if (!(user.Identity?.IsAuthenticated ?? false))
+                {
+                    await OpenLoginDialogAsync();
+                    return;
+                }
+
                 var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    await OpenLoginDialogAsync();
+                    return;
+                }
+
                 var client = await ClientService.GetClientByUserIdAsync(userId);
+                if (client is null)
+                {
+                    await ShowErrorDialog("Client profile not found for current user.");
+                    return;
+                }
 
                 var createRentalDto = new CreateRentalDto
                 {
@@ -282,7 +302,7 @@ else if (car is not null)
                     ClientId = client.Id,
                     RentalDate = _dateRange!.Start!.Value,
                     ReturnDate = _dateRange!.End!.Value,
-                    IsPaid = true // (payment methods are skipped in this project)
+                    IsPaid = true
                 };
 
                 var rentalId = await RentalService.CreateRentalAsync(createRentalDto);
@@ -292,7 +312,6 @@ else if (car is not null)
                 totalPrice = 0;
 
                 await LoadExistingRentals();
-
                 await ShowSuccessDialog(rentalId);
             }
             catch (Exception ex)

@@ -1,31 +1,49 @@
 @page "/login"
+@rendermode InteractiveServer
 @inject SignInManager<IdentityUser> SignInManager
 @inject NavigationManager Navigation
 
-<h3>Zaloguj siê</h3>
-
-<EditForm Model="Input" FormName="login" OnValidSubmit="ZalogujUzytkownika">
-    <DataAnnotationsValidator />
-
-    <div>
-        <label>E-mail:</label>
-        <InputText @bind-Value="Input.Email" class="form-control" />
-        <ValidationMessage For="@(() => Input.Email)" />
+<div class="login-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Login</h3>
+        </div>
     </div>
+</div>
 
-    <div>
-        <label>Password:</label>
-        <InputText @bind-Value="Input.Password" type="password" class="form-control" />
-        <ValidationMessage For="@(() => Input.Password)" />
+<div class="login-info">
+    <div class="container my-4">
+        <div class="login-form-card">
+            <EditForm Model="Input" FormName="login" OnValidSubmit="ZalogujUzytkownika">
+                <DataAnnotationsValidator />
+
+                <div class="email">
+                    <label>E-mail:</label>
+                    <InputText @bind-Value="Input.Email" class="form-control" />
+                    <ValidationMessage For="@(() => Input.Email)" />
+                </div>
+
+                <div class="password">
+                    <label>Password:</label>
+                    <InputText @bind-Value="Input.Password" type="password" class="form-control" />
+                    <ValidationMessage For="@(() => Input.Password)" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Zaloguj siê</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="PrzejdzDoRejestracji">
+                        Zarejestruj siê
+                    </button>
+                </div>
+            </EditForm>
+        </div>
     </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-
-    <button type="submit" class="btn btn-primary">Zaloguj siê</button>
-</EditForm>
+</div>
 
 @code {
     [SupplyParameterFromForm]
@@ -48,6 +66,11 @@
         {
             errorMessage = "Invalid email or password.";
         }
+    }
+
+    private void PrzejdzDoRejestracji()
+    {
+        Navigation.NavigateTo("/register");
     }
 
     private sealed class InputModel

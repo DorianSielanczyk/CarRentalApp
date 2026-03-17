@@ -1,8 +1,8 @@
 using CarRentalApp.Application;
 using CarRentalApp.Infrastructure;
 using CarRentalApp.Infrastructure.Data;
+using CarRentalApp.WebUI.Server.Auth;
 using CarRentalApp.WebUI.Server.Components;
-using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +50,8 @@ app.UseAntiforgery();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapAuthEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
