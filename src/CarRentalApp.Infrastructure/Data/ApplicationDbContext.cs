@@ -16,6 +16,7 @@ namespace CarRentalApp.Infrastructure.Data
         public DbSet<Client> Clients { get; set; }
         public DbSet<Rental> Rentals { get; set; }
         public DbSet<CarPhoto> CarPhotos { get; set; }
+        public DbSet<RentalPhoto> RentalPhotos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +56,12 @@ namespace CarRentalApp.Infrastructure.Data
                 .WithMany(c => c.CarPhotos)
                 .HasForeignKey(cp => cp.CarId)
                 .OnDelete(DeleteBehavior.Cascade); // If a Car is deleted, delete associated CarPhotos
+
+            modelBuilder.Entity<RentalPhoto>()
+                .HasOne(rp => rp.Rental)
+                .WithMany(r => r.RentalPhotos)
+                .HasForeignKey(rp => rp.RentalId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

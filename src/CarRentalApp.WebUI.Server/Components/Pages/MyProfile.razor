@@ -1,0 +1,205 @@
+﻿@page "/profile"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using CarRentalApp.Application.DTOs
+@using CarRentalApp.Application.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IClientService ClientService
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
+
+<div class="profile-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">My Profile</h3>
+        </div>
+    </div>
+</div>
+
+<div class="profile-info">
+    <div class="container my-4">
+        <div class="profile-form-card">
+            @if (isLoading)
+            {
+                <p class="mb-0">Loading profile...</p>
+            }
+            else
+            {
+                <EditForm Model="Input" FormName="profile" OnValidSubmit="SaveChangesAsync">
+                    <DataAnnotationsValidator />
+
+                    <div class="first-name">
+                        <label>First Name:</label>
+                        <InputText @bind-Value="Input.FirstName" class="form-control" />
+                        <ValidationMessage For="@(() => Input.FirstName)" />
+                    </div>
+
+                    <div class="last-name">
+                        <label>Last Name:</label>
+                        <InputText @bind-Value="Input.LastName" class="form-control" />
+                        <ValidationMessage For="@(() => Input.LastName)" />
+                    </div>
+
+                    <div class="driver-license">
+                        <label>Driver License:</label>
+                        <InputText @bind-Value="Input.DriverLicense" class="form-control" />
+                        <ValidationMessage For="@(() => Input.DriverLicense)" />
+                    </div>
+
+                    <div class="email">
+                        <label>E-mail:</label>
+                        <InputText @bind-Value="Input.Email" class="form-control" />
+                        <ValidationMessage For="@(() => Input.Email)" />
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(successMessage))
+                    {
+                        <div class="alert alert-success">@successMessage</div>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                            @(isSaving ? "Saving..." : "Save changes")
+                        </button>
+                        <a href="/" class="btn btn-outline-secondary">Back to homepage</a>
+                    </div>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private InputModel Input { get; set; } = new();
+
+    private ClientDto? client;
+    private IdentityUser? user;
+    private bool isLoading = true;
+    private bool isSaving;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileAsync();
+    }
+
+    private async Task LoadProfileAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!(authState.User.Identity?.IsAuthenticated ?? false))
+        {
+            Navigation.NavigateTo("/login?returnUrl=%2Fprofile", true);
+            return;
+        }
+
+        var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            errorMessage = "Cannot identify current user.";
+            isLoading = false;
+            return;
+        }
+
+        user = await UserManager.FindByIdAsync(userId);
+        client = await ClientService.GetClientByUserIdAsync(userId);
+
+        if (user is null || client is null)
+        {
+            errorMessage = "Profile data not found.";
+            isLoading = false;
+            return;
+        }
+
+        Input = new InputModel
+        {
+            FirstName = client.FirstName,
+            LastName = client.LastName,
+            DriverLicense = client.DriverLicense,
+            Email = user.Email ?? string.Empty
+        };
+
+        isLoading = false;
+    }
+
+    private async Task SaveChangesAsync()
+    {
+        if (client is null || user is null)
+        {
+            errorMessage = "Profile data not loaded.";
+            return;
+        }
+
+        isSaving = true;
+        errorMessage = null;
+        successMessage = null;
+
+        client.FirstName = Input.FirstName;
+        client.LastName = Input.LastName;
+        client.DriverLicense = Input.DriverLicense;
+
+        var profileUpdated = await ClientService.UpdateClientAsync(client);
+        if (!profileUpdated)
+        {
+            errorMessage = "Failed to update profile.";
+            isSaving = false;
+            return;
+        }
+
+        if (!string.Equals(user.Email, Input.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var emailResult = await UserManager.SetEmailAsync(user, Input.Email);
+            if (!emailResult.Succeeded)
+            {
+                errorMessage = string.Join(", ", emailResult.Errors.Select(e => e.Description));
+                isSaving = false;
+                return;
+            }
+
+            var usernameResult = await UserManager.SetUserNameAsync(user, Input.Email);
+            if (!usernameResult.Succeeded)
+            {
+                errorMessage = string.Join(", ", usernameResult.Errors.Select(e => e.Description));
+                isSaving = false;
+                return;
+            }
+
+            await SignInManager.RefreshSignInAsync(user);
+        }
+
+        successMessage = "Profile updated successfully.";
+        isSaving = false;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        public string LastName { get; set; } = "";
+
+        [Required]
+        [Length(10, 10)]
+        public string DriverLicense { get; set; } = "";
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+    }
+}

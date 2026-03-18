@@ -24,5 +24,7 @@ namespace CarRentalApp.Domain.Entities
         // Navigation properties
         public Car? Car { get; set; }
         public Client? Client { get; set; }
+
+        public ICollection<RentalPhoto> RentalPhotos { get; set; } = new List<RentalPhoto>();
     }
 }

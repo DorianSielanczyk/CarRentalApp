@@ -1,5 +1,4 @@
 @page "/login"
-@rendermode InteractiveServer
 @inject SignInManager<IdentityUser> SignInManager
 @inject NavigationManager Navigation
 
@@ -14,7 +13,7 @@
 <div class="login-info">
     <div class="container my-4">
         <div class="login-form-card">
-            <EditForm Model="Input" FormName="login" OnValidSubmit="ZalogujUzytkownika">
+            <EditForm Model="Input" FormName="login" OnValidSubmit="LoginUser">
                 <DataAnnotationsValidator />
 
                 <div class="email">
@@ -36,9 +35,7 @@
 
                 <div class="d-grid gap-2">
                     <button type="submit" class="btn btn-primary">Zaloguj siê</button>
-                    <button type="button" class="btn btn-outline-secondary" @onclick="PrzejdzDoRejestracji">
-                        Zarejestruj siê
-                    </button>
+                    <a href="/register" class="btn btn-outline-secondary">Zarejestruj siê</a>
                 </div>
             </EditForm>
         </div>
@@ -54,7 +51,7 @@
 
     private string? errorMessage;
 
-    private async Task ZalogujUzytkownika()
+    private async Task LoginUser()
     {
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, true, false);
 
@@ -66,11 +63,6 @@
         {
             errorMessage = "Invalid email or password.";
         }
-    }
-
-    private void PrzejdzDoRejestracji()
-    {
-        Navigation.NavigateTo("/register");
     }
 
     private sealed class InputModel

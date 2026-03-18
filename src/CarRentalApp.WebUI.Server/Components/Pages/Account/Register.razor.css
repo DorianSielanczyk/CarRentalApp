@@ -1,0 +1,108 @@
+﻿.register-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.register-header .d-flex {
+    justify-content: center !important;
+}
+
+.register-form-card {
+    background-color: #f8f9fa;
+    padding: 2rem;
+}
+
+.register-info {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.first-name,
+.last-name,
+.driver-license,
+.email {
+    margin-bottom: 10px;
+}
+
+.password {
+    margin-bottom: 25px;
+}
+
+.first-name ::deep .form-control.valid,
+.first-name ::deep .form-control.valid:focus,
+.first-name ::deep .form-control.valid.modified:not([type=checkbox]),
+.last-name ::deep .form-control.valid,
+.last-name ::deep .form-control.valid:focus,
+.last-name ::deep .form-control.valid.modified:not([type=checkbox]),
+.driver-license ::deep .form-control.valid,
+.driver-license ::deep .form-control.valid:focus,
+.driver-license ::deep .form-control.valid.modified:not([type=checkbox]),
+.email ::deep .form-control.valid,
+.email ::deep .form-control.valid:focus,
+.email ::deep .form-control.valid.modified:not([type=checkbox]),
+.password ::deep .form-control.valid,
+.password ::deep .form-control.valid:focus,
+.password ::deep .form-control.valid.modified:not([type=checkbox]),
+.first-name ::deep .form-control.invalid,
+.first-name ::deep .form-control.invalid:focus,
+.last-name ::deep .form-control.invalid,
+.last-name ::deep .form-control.invalid:focus,
+.driver-license ::deep .form-control.invalid,
+.driver-license ::deep .form-control.invalid:focus,
+.email ::deep .form-control.invalid,
+.email ::deep .form-control.invalid:focus,
+.password ::deep .form-control.invalid,
+.password ::deep .form-control.invalid:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.first-name ::deep .form-control:focus,
+.first-name ::deep .form-control:active,
+.first-name ::deep .form-control:focus-visible,
+.last-name ::deep .form-control:focus,
+.last-name ::deep .form-control:active,
+.last-name ::deep .form-control:focus-visible,
+.driver-license ::deep .form-control:focus,
+.driver-license ::deep .form-control:active,
+.driver-license ::deep .form-control:focus-visible,
+.email ::deep .form-control:focus,
+.email ::deep .form-control:active,
+.email ::deep .form-control:focus-visible,
+.password ::deep .form-control:focus,
+.password ::deep .form-control:active,
+.password ::deep .form-control:focus-visible {
+    border-color: #000 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.btn-primary {
+    background-color: #217418;
+    border-color: #217418;
+}
+
+.btn-primary:hover {
+    background-color: #1f551a;
+    border-color: #1f551a;
+}
+
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:focus-visible {
+    background-color: #1f551a;
+    border-color: #1f551a;
+    outline: none;
+    box-shadow: none;
+}
+
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active,
+.btn-outline-secondary:focus-visible {
+    outline: none;
+    box-shadow: none;
+}

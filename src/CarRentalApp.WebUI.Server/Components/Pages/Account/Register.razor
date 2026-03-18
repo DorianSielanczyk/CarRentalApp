@@ -7,48 +7,65 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 
-<h3>Zarejestruj siê</h3>
-
-<EditForm Model="Input" FormName="register" OnValidSubmit="RejestrujUzytkownika">
-    <DataAnnotationsValidator />
-
-    <div>
-        <label>Imiê:</label>
-        <InputText @bind-Value="Input.FirstName" class="form-control" />
-        <ValidationMessage For="@(() => Input.FirstName)" />
+<div class="register-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Register</h3>
+        </div>
     </div>
+</div>
 
-    <div>
-        <label>Nazwisko:</label>
-        <InputText @bind-Value="Input.LastName" class="form-control" />
-        <ValidationMessage For="@(() => Input.LastName)" />
+<div class="register-info">
+    <div class="container my-4">
+        <div class="register-form-card">
+            <EditForm Model="Input" FormName="register" OnValidSubmit="RegisterUser">
+                <DataAnnotationsValidator />
+
+                <div class="first-name">
+                    <label>First Name:</label>
+                    <InputText @bind-Value="Input.FirstName" class="form-control" />
+                    <ValidationMessage For="@(() => Input.FirstName)" />
+                </div>
+
+                <div class="last-name">
+                    <label>Last Name:</label>
+                    <InputText @bind-Value="Input.LastName" class="form-control" />
+                    <ValidationMessage For="@(() => Input.LastName)" />
+                </div>
+
+                <div class="driver-license">
+                    <label>Driver License:</label>
+                    <InputText @bind-Value="Input.DriverLicense" class="form-control" />
+                    <ValidationMessage For="@(() => Input.DriverLicense)" />
+                </div>
+
+                <div class="email">
+                    <label>E-mail:</label>
+                    <InputText @bind-Value="Input.Email" class="form-control" />
+                    <ValidationMessage For="@(() => Input.Email)" />
+                </div>
+
+                <div class="password">
+                    <label>Password:</label>
+                    <InputText @bind-Value="Input.Password" type="password" class="form-control" />
+                    <ValidationMessage For="@(() => Input.Password)" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <a href="/login" class="btn btn-outline-secondary">
+                        Back to login
+                    </a>
+                </div>
+            </EditForm>
+        </div>
     </div>
-
-    <div>
-        <label>Numer prawa jazdy:</label>
-        <InputText @bind-Value="Input.DriverLicense" class="form-control" />
-        <ValidationMessage For="@(() => Input.DriverLicense)" />
-    </div>
-
-    <div>
-        <label>E-mail:</label>
-        <InputText @bind-Value="Input.Email" class="form-control" />
-        <ValidationMessage For="@(() => Input.Email)" />
-    </div>
-
-    <div>
-        <label>Has³o:</label>
-        <InputText @bind-Value="Input.Password" type="password" class="form-control" />
-        <ValidationMessage For="@(() => Input.Password)" />
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
-
-    <button type="submit" class="btn btn-primary">Zarejestruj siê</button>
-</EditForm>
+</div>
 
 @code {
     [SupplyParameterFromForm]
@@ -56,7 +73,7 @@
 
     private string? errorMessage;
 
-    private async Task RejestrujUzytkownika()
+    private async Task RegisterUser()
     {
         var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
         var result = await UserManager.CreateAsync(user, Input.Password);
@@ -80,8 +97,18 @@
         }
         else
         {
-            errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+            var primaryError =
+                result.Errors.FirstOrDefault(e => e.Code == "DuplicateEmail")
+                ?? result.Errors.FirstOrDefault(e => e.Code == "DuplicateUserName")
+                ?? result.Errors.FirstOrDefault();
+
+            errorMessage = primaryError?.Description ?? "Registration failed.";
         }
+    }
+
+    private void MoveToLogin()
+    {
+        Navigation.NavigateTo("/login");
     }
 
     private sealed class InputModel
