@@ -1,0 +1,348 @@
+@page "/my-rentals"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IWebHostEnvironment Environment
+
+<div class="rentals-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">My Rentals</h3>
+        </div>
+    </div>
+</div>
+
+<div class="rentals-info">
+    <div class="container my-4">
+        @if (isLoading)
+        {
+            <div class="rentals-card">
+                <p class="mb-0">Loading rentals...</p>
+            </div>
+        }
+        else if (!rentals.Any())
+        {
+            <div class="rentals-card">
+                <p class="mb-0">No rentals found.</p>
+            </div>
+        }
+        else
+        {
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success">@successMessage</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            @foreach (var rental in rentals)
+            {
+                var mainPhoto = rental.Car?.CarPhotos.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg";
+                var beforePhotos = rental.RentalPhotos.Where(p => p.PhotoType == "BeforePickup").ToList();
+                var afterPhotos = rental.RentalPhotos.Where(p => p.PhotoType == "AfterReturn").ToList();
+
+                <div class="rentals-card mb-3">
+                    <div class="rental-row">
+                        <img src="@mainPhoto" class="car-photo" alt="Car" />
+
+                        <div class="rental-details">
+                            <div><strong>Brand:</strong> @rental.Car?.Brand</div>
+                            <div><strong>Model:</strong> @rental.Car?.Model</div>
+                            <div><strong>Registration Number:</strong> @rental.Car?.RegistrationNumber</div>
+                            <div><strong>Year Of Production:</strong> @rental.Car?.YearOfProduction</div>
+                            <div><strong>Price Per Day:</strong> @rental.Car?.PricePerDay.ToString("0.00")</div>
+                            <div><strong>Total Price:</strong> @rental.TotalCost.ToString("0.00")</div>
+                            <div><strong>Mileage:</strong> @rental.Car?.Mileage</div>
+                            <div><strong>Category:</strong> @rental.Car?.Category?.Name</div>
+                            <div>
+                                <strong>Reservation Date Range:</strong>
+                                @rental.RentalDate.ToString("yyyy-MM-dd") - @rental.ReturnDate.ToString("yyyy-MM-dd")
+                            </div>
+                            <div><strong>User Name:</strong> @currentUserName</div>
+                        </div>
+                    </div>
+
+                    @if (rental.Status == "Cancelled")
+                    {
+                        <div class="cancelled-status-wrap mt-3">
+                            <span class="badge text-bg-danger cancelled-status-badge">Cancelled</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="photos-section mt-3">
+                            <div class="upload-block">
+                                <label class="form-label">Photo before take car</label>
+
+                                <InputFile id="@($"before-file-{rental.Id}")"
+                                           class="file-input-hidden"
+                                           multiple
+                                           OnChange="@(e => OnBeforePhotoSelected(e, rental.Id))" />
+                                <label for="@($"before-file-{rental.Id}")" class="btn btn-primary w-100">
+                                    Choose image(s)
+                                </label>
+                                <small class="selected-file-name">@GetBeforeFileName(rental.Id)</small>
+
+                                <button class="btn btn-primary mt-2 w-100"
+                                        @onclick="() => UploadBeforePhotoAsync(rental.Id)">
+                                    Add before photo
+                                </button>
+
+                                @if (beforePhotos.Any())
+                                {
+                                    <div class="thumbs mt-2">
+                                        @foreach (var photo in beforePhotos)
+                                        {
+                                            <img src="@photo.PhotoUrl" class="thumb" alt="Before pickup" />
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="upload-block">
+                                <label class="form-label">Photo after return</label>
+
+                                <InputFile id="@($"after-file-{rental.Id}")"
+                                           class="file-input-hidden"
+                                           multiple
+                                           OnChange="@(e => OnAfterPhotoSelected(e, rental.Id))" />
+                                <label for="@($"after-file-{rental.Id}")" class="btn btn-outline-secondary w-100">
+                                    Choose image(s)
+                                </label>
+                                <small class="selected-file-name">@GetAfterFileName(rental.Id)</small>
+
+                                <button class="btn btn-outline-secondary mt-2 w-100"
+                                        @onclick="() => UploadAfterPhotoAsync(rental.Id)">
+                                    Add after photo
+                                </button>
+
+                                @if (afterPhotos.Any())
+                                {
+                                    <div class="thumbs mt-2">
+                                        @foreach (var photo in afterPhotos)
+                                        {
+                                            <img src="@photo.PhotoUrl" class="thumb" alt="After return" />
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (CanCancelReservation(rental))
+                        {
+                            <div class="cancel-reservation-wrap">
+                                <button class="btn btn-outline-secondary back-button btn-sm"
+                                        @onclick="() => CancelReservationAsync(rental.Id)">
+                                    Cancel reservation
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<Rental> rentals = new();
+    private bool isLoading = true;
+    private string? successMessage;
+    private string? errorMessage;
+
+    private readonly Dictionary<int, List<IBrowserFile>> beforePhotoBuffer = new();
+    private readonly Dictionary<int, List<IBrowserFile>> afterPhotoBuffer = new();
+    private readonly Dictionary<int, string> beforeFileNames = new();
+    private readonly Dictionary<int, string> afterFileNames = new();
+
+    private string currentUserName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRentalsAsync();
+    }
+
+    private async Task LoadRentalsAsync()
+    {
+        isLoading = true;
+        successMessage = null;
+        errorMessage = null;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserName = authState.User.Identity?.Name ?? "Unknown user";
+        var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            errorMessage = "User not found.";
+            isLoading = false;
+            return;
+        }
+
+        var client = await DbContext.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (client is null)
+        {
+            errorMessage = "Client profile not found.";
+            isLoading = false;
+            return;
+        }
+
+        var latestRentalIds = await DbContext.Rentals
+            .Where(r => r.ClientId == client.Id)
+            .GroupBy(r => r.CarId)
+            .Select(g => g
+                .OrderByDescending(r => r.RentalDate)
+                .ThenByDescending(r => r.Id)
+                .Select(r => r.Id)
+                .First())
+            .ToListAsync();
+
+        rentals = await DbContext.Rentals
+            .Include(r => r.Car)
+                .ThenInclude(c => c!.Category)
+            .Include(r => r.Car)
+                .ThenInclude(c => c!.CarPhotos)
+            .Include(r => r.RentalPhotos)
+            .Where(r => r.ClientId == client.Id)
+            .OrderByDescending(r => r.Id)
+            .ToListAsync();
+
+        isLoading = false;
+    }
+
+    private void OnBeforePhotoSelected(InputFileChangeEventArgs args, int rentalId)
+    {
+        var files = args.GetMultipleFiles(10).ToList();
+        if (files.Count == 0) return;
+
+        beforePhotoBuffer[rentalId] = files;
+        beforeFileNames[rentalId] = $"{files.Count} image(s) selected";
+    }
+
+    private void OnAfterPhotoSelected(InputFileChangeEventArgs args, int rentalId)
+    {
+        var files = args.GetMultipleFiles(10).ToList();
+        if (files.Count == 0) return;
+
+        afterPhotoBuffer[rentalId] = files;
+        afterFileNames[rentalId] = $"{files.Count} image(s) selected";
+    }
+
+    private string GetBeforeFileName(int rentalId)
+    {
+        return beforeFileNames.TryGetValue(rentalId, out var fileName)
+            ? fileName
+            : "No image selected";
+    }
+
+    private string GetAfterFileName(int rentalId)
+    {
+        return afterFileNames.TryGetValue(rentalId, out var fileName)
+            ? fileName
+            : "No image selected";
+    }
+
+    private async Task UploadBeforePhotoAsync(int rentalId)
+    {
+        if (!beforePhotoBuffer.TryGetValue(rentalId, out var files) || files.Count == 0)
+        {
+            errorMessage = "Select file first.";
+            return;
+        }
+
+        await SaveRentalPhotosAsync(rentalId, files, "BeforePickup");
+    }
+
+    private async Task UploadAfterPhotoAsync(int rentalId)
+    {
+        if (!afterPhotoBuffer.TryGetValue(rentalId, out var files) || files.Count == 0)
+        {
+            errorMessage = "Select file first.";
+            return;
+        }
+
+        await SaveRentalPhotosAsync(rentalId, files, "AfterReturn");
+    }
+
+    private async Task SaveRentalPhotosAsync(int rentalId, List<IBrowserFile> files, string photoType)
+    {
+        try
+        {
+            successMessage = null;
+            errorMessage = null;
+
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var uploadsDirectory = Path.Combine(Environment.WebRootPath, "images", "rental-checks");
+            Directory.CreateDirectory(uploadsDirectory);
+
+            foreach (var file in files)
+            {
+                var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+                if (!allowed.Contains(extension))
+                {
+                    errorMessage = $"File {file.Name} has invalid format.";
+                    return;
+                }
+
+                var fileName = $"{rentalId}_{photoType}_{Guid.NewGuid():N}{extension}";
+                var fullPath = Path.Combine(uploadsDirectory, fileName);
+
+                await using var stream = new FileStream(fullPath, FileMode.Create);
+                await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(stream);
+
+                DbContext.RentalPhotos.Add(new RentalPhoto
+                {
+                    RentalId = rentalId,
+                    PhotoUrl = $"/images/rental-checks/{fileName}",
+                    PhotoType = photoType,
+                    UploadedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            await DbContext.SaveChangesAsync();
+            successMessage = $"{files.Count} photo(s) uploaded.";
+            await LoadRentalsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Upload failed: {ex.Message}";
+        }
+    }
+
+    private static bool CanCancelReservation(Rental rental)
+    {
+        return rental.Status == "Active"
+            && (rental.RentalDate.Date - DateTime.Today).TotalDays > 7;
+    }
+
+    private async Task CancelReservationAsync(int rentalId)
+    {
+        successMessage = null;
+        errorMessage = null;
+
+        var rental = await DbContext.Rentals
+            .FirstOrDefaultAsync(r => r.Id == rentalId);
+
+        if (rental is null)
+        {
+            errorMessage = "Reservation not found.";
+            return;
+        }
+
+        if (!CanCancelReservation(rental))
+        {
+            errorMessage = "You can cancel only if booking starts in more than 7 days.";
+            return;
+        }
+
+        rental.Status = "Cancelled";
+        await DbContext.SaveChangesAsync();
+
+        successMessage = "Reservation cancelled.";
+        await LoadRentalsAsync();
+    }
+}

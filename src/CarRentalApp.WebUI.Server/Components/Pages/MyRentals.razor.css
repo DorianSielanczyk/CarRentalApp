@@ -1,0 +1,193 @@
+.rentals-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.rentals-header .d-flex {
+    justify-content: center !important;
+}
+
+.rentals-info {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.rentals-card {
+    background-color: #f8f9fa;
+    padding: 1rem;
+}
+
+.rental-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.car-photo {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.rental-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 1rem;
+    width: 100%;
+}
+
+.photos-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.upload-block {
+    background: #fff;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+.thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.btn-primary {
+    background-color: #217418;
+    border-color: #217418;
+}
+
+.btn-primary:hover {
+    background-color: #1f551a;
+    border-color: #1f551a;
+}
+
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:focus-visible {
+    background-color: #1f551a;
+    border-color: #1f551a;
+    outline: none;
+    box-shadow: none;
+}
+
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active,
+.btn-outline-secondary:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.upload-block ::deep .file-input-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.selected-file-name {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+    min-height: 1.2rem;
+}
+
+.btn-outline-danger:focus,
+.btn-outline-danger:active,
+.btn-outline-danger:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.cancel-reservation-wrap {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-cancel-reservation {
+    background-color: transparent;
+    border: 1px solid #000;
+    color: #000;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem;
+    line-height: 1.2;
+}
+
+.btn-cancel-reservation:hover {
+    background-color: #f8f9fa;
+    border-color: #000;
+    color: #000;
+}
+
+.btn-cancel-reservation:focus,
+.btn-cancel-reservation:active,
+.btn-cancel-reservation:focus-visible {
+    outline: none;
+    box-shadow: none;
+    border-color: #000;
+    color: #000;
+}
+
+.back-button {
+    color: #292524;
+    border-color: #292524;
+}
+
+.back-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.back-button:focus,
+.back-button:active,
+.back-button:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.cancelled-status-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.cancelled-status-badge {
+    font-size: 0.85rem;
+    padding: 0.45rem 0.8rem;
+}
