@@ -1,0 +1,114 @@
+﻿::deep .form-control {
+    border-color: #292524;
+}
+
+::deep .form-control:focus,
+::deep .form-control:active,
+::deep .form-control:focus-visible {
+    border-color: #292524 !important;
+    outline: none !important;
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem !important;
+}
+
+::deep .form-control.valid,
+::deep .form-control.valid:focus,
+::deep .form-control.valid.modified:not([type=checkbox]),
+::deep .form-control.invalid,
+::deep .form-control.invalid:focus {
+    border-color: #292524 !important;
+}
+
+.report-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+    .report-header .d-flex {
+        justify-content: center !important;
+    }
+
+.report-info {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.report-form-card {
+    background-color: #f8f9fa;
+    padding: 2rem;
+}
+
+.file-input-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.selected-file-name {
+    display: block;
+    margin-top: 0.5rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.btn-primary {
+    background-color: #217418;
+    border-color: #217418;
+}
+
+    .btn-primary:hover {
+        background-color: #1f551a;
+        border-color: #1f551a;
+    }
+
+    .btn-primary:focus,
+    .btn-primary:active,
+    .btn-primary:focus-visible {
+        background-color: #1f551a;
+        border-color: #1f551a;
+        outline: none;
+        box-shadow: none;
+    }
+
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active,
+.btn-outline-secondary:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.car-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.back-button {
+    color: #292524;
+    border-color: #292524;
+}
+
+.back-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.back-button:focus,
+.back-button:active,
+.back-button:focus-visible {
+    outline: none;
+    box-shadow: none;
+}

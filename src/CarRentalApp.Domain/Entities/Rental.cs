@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CarRentalApp.Domain.Entities.Breakdowns;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,5 +27,6 @@ namespace CarRentalApp.Domain.Entities
         public Client? Client { get; set; }
 
         public ICollection<RentalPhoto> RentalPhotos { get; set; } = new List<RentalPhoto>();
+        public ICollection<BreakdownReport> BreakdownReports { get; set; } = new List<BreakdownReport>();
     }
 }

@@ -1,0 +1,253 @@
+﻿@page "/report-damage"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject IWebHostEnvironment Environment
+@inject IReportDamageService ReportDamageService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="report-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Report Damage</h3>
+        </div>
+    </div>
+</div>
+
+<div class="report-info">
+    <div class="container my-4">
+        <div class="report-form-card">
+            @if (!activeRentals.Any())
+            {
+                <div class="alert alert-warning mb-0">You currently have no rented vehicle.</div>
+            }
+            else
+            {
+                <EditForm Model="Input" FormName="report-damage" OnValidSubmit="SubmitAsync">
+                    <DataAnnotationsValidator />
+
+                    @if (activeRentals.Count == 1)
+                    {
+                        <div class="mb-2">
+                            <strong>Car:</strong>
+                            @activeRentals[0].Car?.Brand @activeRentals[0].Car?.Model (@activeRentals[0].Car?.RegistrationNumber)
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-2">
+                            <label>Select rented car:</label>
+                            <InputSelect TValue="int"
+                                         Value="selectedRentalId"
+                                         ValueChanged="@(EventCallback.Factory.Create<int>(this, OnSelectedRentalChanged))"
+                                         ValueExpression="@(() => selectedRentalId)"
+                                         class="form-control rental-select">
+                                @foreach (var rental in activeRentals)
+                                {
+                                    <option value="@rental.Id">
+                                        @rental.Car?.Brand @rental.Car?.Model (@rental.Car?.RegistrationNumber)
+                                    </option>
+                                }
+                            </InputSelect>
+
+                            @if (SelectedRental is not null)
+                            {
+                                <small class="selected-rental-details">
+                                    @($"{SelectedRental.RentalDate:yyyy-MM-dd} to {SelectedRental.ReturnDate:yyyy-MM-dd}")
+                                </small>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(formError))
+                    {
+                        <div class="alert alert-danger">@formError</div>
+                    }
+
+                    <div class="mb-2">
+                        <label>Breakdown Type:</label>
+                        <InputSelect @bind-Value="Input.BreakdownType" class="form-control">
+                            @foreach (var t in Enum.GetValues<BreakdownType>())
+                            {
+                                <option value="@t">@t</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Description:</label>
+                        <InputTextArea @bind-Value="Input.Description" class="form-control" />
+                        <ValidationMessage For="@(() => Input.Description)" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Location:</label>
+                        <InputText @bind-Value="Input.LocationText" class="form-control" />
+                        <ValidationMessage For="@(() => Input.LocationText)" />
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col">
+                            <label>Latitude:</label>
+                            <InputNumber @bind-Value="Input.Latitude" class="form-control" />
+                            <ValidationMessage For="@(() => Input.Latitude)" />
+                        </div>
+                        <div class="col">
+                            <label>Longitude:</label>
+                            <InputNumber @bind-Value="Input.Longitude" class="form-control" />
+                            <ValidationMessage For="@(() => Input.Longitude)" />
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <InputFile id="damage-files" class="file-input-hidden" multiple OnChange="OnFilesSelected" />
+                        <label for="damage-files" class="btn btn-outline-secondary w-100">Choose image(s)</label>
+                        <small class="selected-file-name">@selectedFilesLabel</small>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Send report</button>
+                    </div>
+                </EditForm>
+            }
+        </div>
+
+        <div class="report-form-card mt-3">
+            <h5>My report history</h5>
+            @if (!history.Any())
+            {
+                <p class="mb-0">No reports yet.</p>
+            }
+            else
+            {
+                @foreach (var r in history.OrderByDescending(x => x.CreatedAtUtc))
+                {
+                    <div class="border p-2 mb-2">
+                        <div><strong>@r.BreakdownType</strong> - @r.Status</div>
+                        <div class="small text-muted">@r.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
+                        <div>@r.Description</div>
+
+                        @if (r.Notes.Any())
+                        {
+                            <div class="mt-2">
+                                <strong>Service notes:</strong>
+                                @foreach (var n in r.Notes.OrderByDescending(x => x.CreatedAtUtc))
+                                {
+                                    <div class="small text-muted">
+                                        @n.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm") - @n.Note
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly List<Rental> activeRentals = new();
+    private int selectedRentalId;
+    private List<BreakdownReport> history = new();
+    private readonly List<IBrowserFile> selectedFiles = new();
+    private string selectedFilesLabel = "No image selected";
+    private string? formError;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        var (rentals, reports) = await ReportDamageService.LoadDataAsync(userId);
+
+        activeRentals.Clear();
+        activeRentals.AddRange(rentals);
+        history = reports;
+
+        if (activeRentals.Any())
+        {
+            selectedRentalId = activeRentals[0].Id;
+        }
+    }
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        selectedFiles.Clear();
+        selectedFiles.AddRange(e.GetMultipleFiles(10));
+        selectedFilesLabel = selectedFiles.Count == 0 ? "No image selected" : $"{selectedFiles.Count} image(s) selected";
+    }
+
+    private async Task SubmitAsync()
+    {
+        formError = null;
+
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            formError = "User not found.";
+            return;
+        }
+
+        var result = await ReportDamageService.SubmitAsync(
+            userId,
+            selectedRentalId,
+            Input.BreakdownType,
+            Input.Description,
+            Input.LocationText,
+            Input.Latitude,
+            Input.Longitude,
+            selectedFiles);
+
+        if (!result.Success)
+        {
+            formError = result.Error;
+            return;
+        }
+
+        Input = new();
+        selectedFiles.Clear();
+        selectedFilesLabel = "No image selected";
+
+        await LoadDataAsync();
+    }
+
+    private Task OnSelectedRentalChanged(int rentalId)
+    {
+        selectedRentalId = rentalId;
+        formError = null;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private sealed class InputModel
+    {
+        public BreakdownType BreakdownType { get; set; } = BreakdownType.Other;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Description { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string LocationText { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public decimal? Latitude { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public decimal? Longitude { get; set; }
+    }
+
+    private Rental? SelectedRental => activeRentals.FirstOrDefault(r => r.Id == selectedRentalId);
+}

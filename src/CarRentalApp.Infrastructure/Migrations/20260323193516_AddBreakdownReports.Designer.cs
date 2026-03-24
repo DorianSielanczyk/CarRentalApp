@@ -4,6 +4,7 @@ using CarRentalApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarRentalApp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323193516_AddBreakdownReports")]
+    partial class AddBreakdownReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace CarRentalApp.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReport", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReport", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -65,7 +68,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                     b.ToTable("BreakdownReports");
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReportNote", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReportNote", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -94,7 +97,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                     b.ToTable("BreakdownReportNotes");
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReportPhoto", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReportPhoto", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -691,7 +694,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "CUSTOMER@CARRENTAL.COM",
                             NormalizedUserName = "CUSTOMER@CARRENTAL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAECFeEMKgUnK08wdR0J9E3Q5iwRDJL1dNVAl10LTImrrEAbkRDJK9oCokPa4CD4X43Q==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKiJEpWK5r9sa0fsw/3OAuQh2UspDfkKSQw+VBCWEZ7U1WRZZsxcQlLXL5AQAwbbsA==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "user-customer-stamp",
                             TwoFactorEnabled = false,
@@ -707,7 +710,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "WORKER@CARRENTAL.COM",
                             NormalizedUserName = "WORKER@CARRENTAL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEM3+PNIdGF9HsldMW0fMQySkDkLWQdyeaC5LUJ0rYPuo468hEfs7WGlcA6wXkTEcAA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHx8V6M1CH4H8htSe+9VyyulHpnMzwT+uUPjyq6uL2U/r8/cULL4AHX+VxVRPS34yQ==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "user-worker-stamp",
                             TwoFactorEnabled = false,
@@ -723,7 +726,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@CARRENTAL.COM",
                             NormalizedUserName = "ADMIN@CARRENTAL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEKkwlqoIimbVAAhZdYuIC0oNoo/lQ2jPOX+m4rA7GhHkpN4p3euhBq9PD+bWAsqiGw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEIE5LqAj3SLC1tdaYfLBvgB6lh3zZIU7C/3B3ndIkRD6dOY6cNza9+oVp7hekfORFw==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "user-admin-stamp",
                             TwoFactorEnabled = false,
@@ -829,7 +832,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReport", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReport", b =>
                 {
                     b.HasOne("CarRentalApp.Domain.Entities.Rental", "Rental")
                         .WithMany("BreakdownReports")
@@ -840,9 +843,9 @@ namespace CarRentalApp.Infrastructure.Migrations
                     b.Navigation("Rental");
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReportNote", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReportNote", b =>
                 {
-                    b.HasOne("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReport", "BreakdownReport")
+                    b.HasOne("CarRentalApp.Domain.Entities.BreakdownReport", "BreakdownReport")
                         .WithMany("Notes")
                         .HasForeignKey("BreakdownReportId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -851,9 +854,9 @@ namespace CarRentalApp.Infrastructure.Migrations
                     b.Navigation("BreakdownReport");
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReportPhoto", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReportPhoto", b =>
                 {
-                    b.HasOne("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReport", "BreakdownReport")
+                    b.HasOne("CarRentalApp.Domain.Entities.BreakdownReport", "BreakdownReport")
                         .WithMany("Photos")
                         .HasForeignKey("BreakdownReportId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -973,7 +976,7 @@ namespace CarRentalApp.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CarRentalApp.Domain.Entities.Breakdowns.BreakdownReport", b =>
+            modelBuilder.Entity("CarRentalApp.Domain.Entities.BreakdownReport", b =>
                 {
                     b.Navigation("Notes");
 

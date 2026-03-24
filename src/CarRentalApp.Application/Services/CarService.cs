@@ -21,38 +21,14 @@ namespace CarRentalApp.Application.Services
 
         public async Task<IEnumerable<CarDto>> GetAvailableCarsAsync()
         {
-            try
-            {
-                var cars = await _unitOfWork.Cars.GetAvailableCarsAsync();
-                var carsList = cars.ToList();
-                
-                Console.WriteLine($"CarService: Retrieved {carsList.Count} available cars from repository");
-                
-                if (carsList.Count > 0)
-                {
-                    var firstCar = carsList.First();
-                    Console.WriteLine($"First car: {firstCar.Brand} {firstCar.Model}");
-                    Console.WriteLine($"Category loaded: {firstCar.Category != null}");
-                    Console.WriteLine($"Photos count: {firstCar.CarPhotos?.Count ?? 0}");
-                }
-                
-                var dtos = carsList.Select(MapToDto).ToList();
-                Console.WriteLine($"CarService: Mapped to {dtos.Count} DTOs");
-                
-                return dtos;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"CarService ERROR: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                throw;
-            }
+            var cars = await _unitOfWork.Cars.GetAvailableCarsAsync();
+            return cars.Select(MapToDto).ToList();
         }
 
         public async Task<CarDto?> GetCarByIdAsync(int id)
         {
             var car = await _unitOfWork.Cars.GetCarWithDetailsAsync(id);
-            return car != null ? MapToDto(car) : null;
+            return car is not null ? MapToDto(car) : null;
         }
 
         public async Task<IEnumerable<CarDto>> GetCarsByCategoryAsync(int categoryId)
@@ -70,8 +46,10 @@ namespace CarRentalApp.Application.Services
         public async Task<bool> UpdateCarAsync(UpdateCarDto carDto)
         {
             var car = await _unitOfWork.Cars.GetByIdAsync(carDto.Id);
-            if (car == null)
+            if (car is null)
+            {
                 return false;
+            }
 
             car.Brand = carDto.Brand;
             car.Model = carDto.Model;
@@ -84,34 +62,39 @@ namespace CarRentalApp.Application.Services
 
             _unitOfWork.Cars.Update(car);
             await _unitOfWork.SaveChangesAsync();
-            
+
             return true;
         }
 
         public async Task<bool> UpdateCarAvailabilityAsync(int carId, bool isAvailable)
         {
             var car = await _unitOfWork.Cars.GetByIdAsync(carId);
-            if (car == null)
+            if (car is null)
+            {
                 return false;
+            }
 
             car.IsAvailable = isAvailable;
             _unitOfWork.Cars.Update(car);
             await _unitOfWork.SaveChangesAsync();
-            
+
             return true;
         }
 
         public async Task<bool> DeleteCarAsync(int id)
         {
             var car = await _unitOfWork.Cars.GetByIdAsync(id);
-            if (car == null)
+            if (car is null)
+            {
                 return false;
+            }
 
             _unitOfWork.Cars.Remove(car);
             await _unitOfWork.SaveChangesAsync();
-            
+
             return true;
         }
+
         private static CarDto MapToDto(Car car)
         {
             var today = DateTime.Today;
@@ -129,7 +112,7 @@ namespace CarRentalApp.Application.Services
                 YearOfProduction = car.YearOfProduction,
                 PricePerDay = car.PricePerDay,
                 Mileage = car.Mileage,
-                IsAvailable = car.Rentals != null && car.Rentals.Count > 0 ? !isRentedToday : car.IsAvailable,
+                IsAvailable = car.Rentals is not null && car.Rentals.Count > 0 ? !isRentedToday : car.IsAvailable,
                 CategoryId = car.CategoryId,
                 CategoryName = car.Category?.Name ?? string.Empty,
                 MainPhotoUrl = car.CarPhotos.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg",

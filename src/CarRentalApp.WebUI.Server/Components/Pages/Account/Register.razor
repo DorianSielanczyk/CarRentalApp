@@ -1,11 +1,10 @@
 @page "/register"
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Identity
-@using CarRentalApp.Infrastructure.Data
-@using CarRentalApp.Domain.Entities
+@rendermode InteractiveServer
 @inject UserManager<IdentityUser> UserManager
-@inject ApplicationDbContext DbContext
+@inject IClientService ClientService
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
+
 
 <div class="register-header">
     <div class="container">
@@ -75,40 +74,97 @@
 
     private async Task RegisterUser()
     {
-        var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
-        var result = await UserManager.CreateAsync(user, Input.Password);
+        errorMessage = null;
 
-        if (result.Succeeded)
+        var user = new IdentityUser
         {
-            await UserManager.AddToRoleAsync(user, "User");
+            UserName = Input.Email,
+            Email = Input.Email
+        };
 
-            var client = new Client
+        var userCreated = false;
+        var registrationSucceeded = false;
+
+        try
+        {
+            var createResult = await UserManager.CreateAsync(user, Input.Password);
+            if (!createResult.Succeeded)
+            {
+                var primaryCreateError =
+                    createResult.Errors.FirstOrDefault(e => e.Code == "DuplicateEmail")
+                    ?? createResult.Errors.FirstOrDefault(e => e.Code == "DuplicateUserName")
+                    ?? createResult.Errors.FirstOrDefault();
+
+                errorMessage = primaryCreateError?.Description ?? "Registration failed.";
+                return;
+            }
+
+            userCreated = true;
+
+            var roleResult = await UserManager.AddToRoleAsync(user, "User");
+            if (!roleResult.Succeeded)
+            {
+                await UserManager.DeleteAsync(user);
+
+                var roleError = roleResult.Errors.FirstOrDefault();
+                errorMessage = roleError?.Description ?? "Failed to assign user role.";
+                return;
+            }
+
+            var created = await ClientService.CreateClientAsync(new ClientDto
             {
                 FirstName = Input.FirstName,
                 LastName = Input.LastName,
                 DriverLicense = Input.DriverLicense,
                 UserId = user.Id
+            });
+
+            if (!created)
+            {
+                await UserManager.DeleteAsync(user);
+                errorMessage = "Client profile creation failed.";
+                return;
+            }
+
+            registrationSucceeded = true;
+        }
+        catch
+        {
+            if (userCreated)
+            {
+                await UserManager.DeleteAsync(user);
+            }
+
+            errorMessage = "Registration failed due to an unexpected error.";
+            return;
+        }
+
+        if (registrationSucceeded)
+        {
+            var parameters = new DialogParameters
+            {
+                ["Email"] = Input.Email
             };
 
-            DbContext.Clients.Add(client);
-            await DbContext.SaveChangesAsync();
+            var options = new DialogOptions
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small,
+                CloseOnEscapeKey = true
+            };
 
-            Navigation.NavigateTo("/login");
+            var dialogReference = await DialogService.ShowAsync<RegisterSuccessDialog>(
+                "Registration successful",
+                parameters,
+                options);
+
+            var dialogResult = await dialogReference.Result;
+
+            if (!dialogResult.Canceled)
+            {
+                Navigation.NavigateTo("/login");
+            }
         }
-        else
-        {
-            var primaryError =
-                result.Errors.FirstOrDefault(e => e.Code == "DuplicateEmail")
-                ?? result.Errors.FirstOrDefault(e => e.Code == "DuplicateUserName")
-                ?? result.Errors.FirstOrDefault();
-
-            errorMessage = primaryError?.Description ?? "Registration failed.";
-        }
-    }
-
-    private void MoveToLogin()
-    {
-        Navigation.NavigateTo("/login");
     }
 
     private sealed class InputModel
