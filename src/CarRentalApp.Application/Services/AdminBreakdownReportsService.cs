@@ -1,8 +1,9 @@
 using CarRentalApp.Domain.Entities.Breakdowns;
+using CarRentalApp.Domain.Interfaces;
 using CarRentalApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace CarRentalApp.WebUI.Server.Services
+namespace CarRentalApp.Application.Services
 {
     public class AdminBreakdownReportsService : IAdminBreakdownReportsService
     {

@@ -1,0 +1,96 @@
+<MudDialog Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <TitleContent>
+        <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" Style="color: white;" />
+                @Client.FirstName @Client.LastName
+            </MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9);">
+            <strong>Email:</strong> @Client.Email
+        </MudText>
+        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9);" Class="mb-3">
+            <strong>Driver license:</strong> @Client.DriverLicense
+        </MudText>
+
+        @if (!Client.Reservations.Any())
+        {
+            <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.7);">
+                No reservations.
+            </MudText>
+        }
+        else
+        {
+            @foreach (var reservation in Client.Reservations)
+            {
+                <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <MudText Typo="Typo.subtitle1" Style="color: white;">
+                        Reservation #@reservation.RentalId - @reservation.CarBrand @reservation.CarModel (@reservation.RegistrationNumber)
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">
+                        @reservation.RentalDate.ToString("yyyy-MM-dd") - @reservation.ReturnDate.ToString("yyyy-MM-dd")
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.8);">
+                        Status: @reservation.Status | Total: @reservation.TotalCost.ToString("0.00")
+                    </MudText>
+
+                    <div class="mt-2">
+                        <MudText Typo="Typo.subtitle2" Style="color: white;">Photos before pickup</MudText>
+                        @if (reservation.BeforePhotos.Any())
+                        {
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                @foreach (var photo in reservation.BeforePhotos)
+                                {
+                                    <img src="@photo" alt="Before pickup" style="width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Style="color: rgba(255, 255, 255, 0.65);">No photos</MudText>
+                        }
+                    </div>
+
+                    <div class="mt-2">
+                        <MudText Typo="Typo.subtitle2" Style="color: white;">Photos after return</MudText>
+                        @if (reservation.AfterPhotos.Any())
+                        {
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                @foreach (var photo in reservation.AfterPhotos)
+                                {
+                                    <img src="@photo" alt="After return" style="width: 90px; height: 90px; object-fit: cover; border-radius: 6px;" />
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Style="color: rgba(255, 255, 255, 0.65);">No photos</MudText>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   OnClick="CloseDialog"
+                   Style="background-color: #217418; color: white; text-transform: uppercase; font-weight: 500;">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public AdminClientDetails Client { get; set; } = new();
+
+    private void CloseDialog() => MudDialog.Close();
+}

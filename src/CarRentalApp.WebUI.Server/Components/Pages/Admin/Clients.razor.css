@@ -1,0 +1,86 @@
+﻿::deep .form-control {
+    border-color: #292524;
+}
+
+::deep .form-control:focus,
+::deep .form-control:active,
+::deep .form-control:focus-visible {
+    border-color: #292524 !important;
+    outline: none !important;
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem !important;
+}
+
+::deep .form-control.valid,
+::deep .form-control.valid:focus,
+::deep .form-control.valid.modified:not([type=checkbox]),
+::deep .form-control.invalid,
+::deep .form-control.invalid:focus {
+    border-color: #292524 !important;
+}
+
+.clients-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.report-form-card {
+    background-color: #f8f9fa;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    width: 100%;
+    text-align: left;
+}
+
+.car-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.back-button {
+    color: #292524;
+    border-color: #292524;
+}
+
+.back-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.back-button:focus,
+.back-button:active,
+.back-button:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.client-card-button {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    display: block;
+}
+
+.client-card-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: #d1d5db;
+}
+
+.client-main-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.55rem;
+    color: #1f2937;
+}
+
+.client-details-grid {
+    display: grid;
+    gap: 0.3rem;
+    color: #374151;
+    line-height: 1.35;
+}

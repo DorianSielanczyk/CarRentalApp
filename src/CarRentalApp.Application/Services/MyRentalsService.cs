@@ -1,9 +1,11 @@
 using CarRentalApp.Domain.Entities;
+using CarRentalApp.Domain.Interfaces;
 using CarRentalApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 
-namespace CarRentalApp.WebUI.Server.Services
+namespace CarRentalApp.Application.Services
 {
     public class MyRentalsService : IMyRentalsService
     {

@@ -1,7 +1,7 @@
 using CarRentalApp.Domain.Entities;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace CarRentalApp.WebUI.Server.Services
+namespace CarRentalApp.Domain.Interfaces
 {
     public interface IMyRentalsService
     {

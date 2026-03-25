@@ -1,4 +1,5 @@
 ﻿using CarRentalApp.Application.Services;
+using CarRentalApp.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CarRentalApp.Application
@@ -11,7 +12,12 @@ namespace CarRentalApp.Application
             services.AddTransient<ICategoryService, CategoryService>();
             services.AddTransient<IClientService, ClientService>();
             services.AddTransient<IRentalService, RentalService>();
-            
+
+            services.AddScoped<IReportDamageService, ReportDamageService>();
+            services.AddScoped<IAdminBreakdownReportsService, AdminBreakdownReportsService>();
+            services.AddScoped<IMyRentalsService, MyRentalsService>();
+            services.AddScoped<IAdminClientsService, AdminClientsService>();
+
             return services;
         }
     }

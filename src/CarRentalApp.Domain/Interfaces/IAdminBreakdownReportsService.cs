@@ -1,6 +1,6 @@
 using CarRentalApp.Domain.Entities.Breakdowns;
 
-namespace CarRentalApp.WebUI.Server.Services
+namespace CarRentalApp.Domain.Interfaces
 {
     public interface IAdminBreakdownReportsService
     {

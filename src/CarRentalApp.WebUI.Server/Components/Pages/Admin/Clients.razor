@@ -1,0 +1,129 @@
+﻿@page "/admin/clients"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Worker,Admin")]
+@inject IAdminClientsService AdminClientsService
+@inject IDialogService DialogService
+@using System.Linq
+
+<div class="car-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Clients</h3>
+            <a href="/" class="btn btn-outline-secondary back-button">
+                <i class="bi bi-arrow-left"></i> Back to homepage
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container my-3">
+    <div class="row g-2 mb-3">
+        <div class="col-md-6">
+            <input class="form-control" placeholder="Search by name or email" @bind="search" />
+        </div>
+        <div class="col-md-3">
+            <button type="button" class="btn btn-outline-secondary w-100" @onclick="ToggleReservationSort">
+                Sort reservations: @(sortReservationsDescending ? "Highest first" : "Lowest first")
+            </button>
+        </div>
+        <div class="col-md-3">
+            <button type="button" class="btn btn-outline-secondary w-100" @onclick="ToggleAlphabeticalSort">
+                Sort A-Z: @(sortAlphabeticallyAscending ? "A → Z" : "Z → A")
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="report-form-card">
+            <p class="mb-0">Loading clients...</p>
+        </div>
+    }
+    else if (!FilteredClients().Any())
+    {
+        <div class="report-form-card">
+            <p class="mb-0">No clients found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="clients-list">
+            @foreach (var client in FilteredClients())
+            {
+                <button type="button" class="report-form-card client-card-button" @onclick="() => OpenClientDialogAsync(client.ClientId)">
+                    <div class="client-main-name">@client.FirstName @client.LastName</div>
+                    <div class="client-details-grid">
+                        <div><strong>Email:</strong> @client.Email</div>
+                        <div><strong>Driver license:</strong> @client.DriverLicense</div>
+                        <div><strong>Reservations:</strong> @client.ReservationCount</div>
+                    </div>
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<AdminClientListItem> clients = [];
+    private bool isLoading = true;
+    private string search = string.Empty;
+    private bool sortReservationsDescending = true;
+    private bool sortAlphabeticallyAscending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clients = await AdminClientsService.LoadClientsAsync();
+        isLoading = false;
+    }
+
+    private void ToggleReservationSort()
+    {
+        sortReservationsDescending = !sortReservationsDescending;
+    }
+
+    private void ToggleAlphabeticalSort()
+    {
+        sortAlphabeticallyAscending = !sortAlphabeticallyAscending;
+    }
+
+    private IEnumerable<AdminClientListItem> FilteredClients()
+    {
+        var query = clients.Where(c =>
+            string.IsNullOrWhiteSpace(search) ||
+            $"{c.FirstName} {c.LastName}".Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            c.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+        var orderedQuery = sortReservationsDescending
+            ? query.OrderByDescending(c => c.ReservationCount)
+            : query.OrderBy(c => c.ReservationCount);
+
+        orderedQuery = sortAlphabeticallyAscending
+            ? orderedQuery.ThenBy(c => c.LastName).ThenBy(c => c.FirstName)
+            : orderedQuery.ThenByDescending(c => c.LastName).ThenByDescending(c => c.FirstName);
+
+        return orderedQuery;
+    }
+
+    private async Task OpenClientDialogAsync(int clientId)
+    {
+        var details = await AdminClientsService.LoadClientDetailsAsync(clientId);
+        if (details is null)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["Client"] = details
+        };
+
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.Large,
+            CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<ClientReservationsDialog>("Client details", parameters, options);
+    }
+}

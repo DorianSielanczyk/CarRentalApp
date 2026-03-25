@@ -3,7 +3,6 @@ using CarRentalApp.Infrastructure;
 using CarRentalApp.Infrastructure.Data;
 using CarRentalApp.WebUI.Server.Auth;
 using CarRentalApp.WebUI.Server.Components;
-using CarRentalApp.WebUI.Server.Services;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,9 +17,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddMudServices();
-builder.Services.AddScoped<IReportDamageService, ReportDamageService>();
-builder.Services.AddScoped<IAdminBreakdownReportsService, AdminBreakdownReportsService>();
-builder.Services.AddScoped<IMyRentalsService, MyRentalsService>();
 
 var app = builder.Build();
 
@@ -29,7 +25,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
-    
+
     if (useMockDatabase)
     {
         context.Database.EnsureCreated();
