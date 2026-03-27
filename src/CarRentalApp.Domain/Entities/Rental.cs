@@ -15,14 +15,8 @@ namespace CarRentalApp.Domain.Entities
         public decimal TotalCost { get; set; } 
         public string Status { get; set; } = string.Empty;
         public bool IsPaid { get; set; }
-
-        // Foreign key for Car
         public int CarId { get; set; }
-
-        // Foreign key for Client
         public int ClientId { get; set; }
-
-        // Navigation properties
         public Car? Car { get; set; }
         public Client? Client { get; set; }
 

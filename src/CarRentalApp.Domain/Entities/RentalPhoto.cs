@@ -7,7 +7,6 @@ namespace CarRentalApp.Domain.Entities
         public string PhotoUrl { get; set; } = string.Empty;
         public string PhotoType { get; set; } = string.Empty; 
         public DateTime UploadedAtUtc { get; set; }
-
         public Rental? Rental { get; set; }
     }
 }
