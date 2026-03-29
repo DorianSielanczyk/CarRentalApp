@@ -103,6 +103,10 @@ namespace CarRentalApp.Application.Services
                 r.RentalDate.Date <= today &&
                 r.ReturnDate.Date >= today) ?? false;
 
+            var status = !car.IsAvailable
+                ? "Unavailable"
+                : isRentedToday ? "Rented" : "Available";
+
             return new CarDto
             {
                 Id = car.Id,
@@ -112,7 +116,8 @@ namespace CarRentalApp.Application.Services
                 YearOfProduction = car.YearOfProduction,
                 PricePerDay = car.PricePerDay,
                 Mileage = car.Mileage,
-                IsAvailable = car.Rentals is not null && car.Rentals.Count > 0 ? !isRentedToday : car.IsAvailable,
+                IsAvailable = car.IsAvailable,
+                Status = status,
                 CategoryId = car.CategoryId,
                 CategoryName = car.Category?.Name ?? string.Empty,
                 MainPhotoUrl = car.CarPhotos.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg",

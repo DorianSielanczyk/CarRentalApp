@@ -76,11 +76,19 @@ else if (car is not null)
                             </h4>
                         </div>
                     </div>
+
+                    @if (!car.IsAvailable)
+                    {
+                        <div class="alert alert-secondary mb-3">
+                            <i class="bi bi-dash-circle-fill"></i> This car is currently unavailable.
+                        </div>
+                    }
+
                     <button class="btn btn-primary w-100"
                             @onclick="ConfirmBooking"
-                            disabled="@(totalDays == 0)">
+                            disabled="@(totalDays == 0 || !car.IsAvailable)">
                         <i class="bi bi-calendar-check"></i>
-                        <text> @(totalDays > 0 ? "Confirm Booking" : "Select Dates")</text>
+                        <text> @(!car.IsAvailable ? "Unavailable" : totalDays > 0 ? "Confirm Booking" : "Select Dates")</text>
                     </button>
                 </div>
             </div>
@@ -203,6 +211,12 @@ else if (car is not null)
 
     private async Task ConfirmBooking()
     {
+        if (car is null || !car.IsAvailable)
+        {
+            await ShowErrorDialog("This car is unavailable and cannot be booked.");
+            return;
+        }
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 

@@ -64,8 +64,11 @@ else if (car is not null)
                             </h4>
                         </div>
                     </div>
-                    <button class="btn btn-primary w-100" @onclick="() => BookCar(car.Id)">
-                        <i class="bi bi-calendar-check"></i> @(car.IsAvailable ? "Book Now" : "Check Availability")
+                    <button class="btn btn-primary w-100"
+                            @onclick="() => BookCar(car.Id)"
+                            disabled="@(car.Status == "Unavailable")">
+                        <i class="bi bi-calendar-check"></i>
+                        @(car.Status == "Available" ? "Book Now" : car.Status == "Rented" ? "Check Availability" : "Unavailable")
                     </button>
                 </div>
             </div>

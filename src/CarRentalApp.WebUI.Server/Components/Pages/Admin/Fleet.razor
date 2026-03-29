@@ -1,0 +1,204 @@
+@page "/admin/fleetmanagement"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Worker,Admin")]
+@using CarRentalApp.Domain.Interfaces
+@inject IAdminFleetService AdminFleetService
+@inject IDialogService DialogService
+
+<div class="clients-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Fleet Management</h3>
+            <a href="/" class="btn btn-outline-secondary back-button">
+                <i class="bi bi-arrow-left"></i> Back to homepage
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container my-3 fleet-page-content">
+    @if (!string.IsNullOrWhiteSpace(feedbackMessage))
+    {
+        <div class="alert @(feedbackError ? "alert-danger" : "alert-success") mb-3">
+            @feedbackMessage
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="report-form-card">
+            <p class="mb-0">Loading fleet...</p>
+        </div>
+    }
+    else if (!cars.Any())
+    {
+        <div class="report-form-card">
+            <p class="mb-0">No cars found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="clients-list">
+            @foreach (var car in cars)
+            {
+                <div class="report-form-card fleet-card">
+                    <div class="client-main-name">@car.Brand @car.Model</div>
+
+                    <div class="fleet-details-grid">
+                        <div><strong>Registration:</strong> @car.RegistrationNumber</div>
+                        <div><strong>Year:</strong> @car.YearOfProduction</div>
+                        <div><strong>Mileage:</strong> @car.Mileage km</div>
+                        <div><strong>Price/day:</strong> $@car.PricePerDay.ToString("N2")</div>
+                        <div><strong>Category:</strong> @car.CategoryName</div>
+                        <div>
+                            <strong>Status:</strong>
+                            <span class="status-pill @GetStatusClass(car.Status)">@car.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="fleet-actions">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenEditDialogAsync(car.CarId)">
+                            Edit data
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" @onclick="() => OpenDeleteDialogAsync(car.CarId, car.Brand + car.Model)">
+                            Delete car
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<div class="add-button-bar">
+    <div class="container add-button-bar-inner">
+        <button class="btn btn-primary add-button" @onclick="OpenAddDialogAsync">
+            <i class="bi bi-plus-circle me-1"></i> Add
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<AdminFleetCarListItem> cars = [];
+    private List<AdminFleetCategoryItem> categories = [];
+    private bool isLoading = true;
+    private string feedbackMessage = string.Empty;
+    private bool feedbackError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        cars = await AdminFleetService.LoadCarsAsync();
+        categories = await AdminFleetService.LoadCategoriesAsync();
+        isLoading = false;
+    }
+
+    private async Task OpenAddDialogAsync()
+    {
+        var model = new AdminFleetCarFormModel
+        {
+            YearOfProduction = DateTime.Now.Year,
+            IsAvailable = true
+        };
+
+        var parameters = new DialogParameters
+        {
+            ["Title"] = "Add car",
+            ["SubmitText"] = "Add",
+            ["Model"] = model,
+            ["Categories"] = categories
+        };
+
+        var dialog = await DialogService.ShowAsync<FleetCarUpsertDialog>("Add car", parameters, BuildDialogOptions());
+        var result = await dialog.Result;
+
+        if (result.Canceled || result.Data is not AdminFleetCarFormModel payload)
+        {
+            return;
+        }
+
+        var ok = await AdminFleetService.AddCarAsync(payload);
+        feedbackError = !ok;
+        feedbackMessage = ok ? "Car added successfully." : "Cannot add car. Check registration number and data.";
+        await LoadDataAsync();
+    }
+
+    private async Task OpenEditDialogAsync(int carId)
+    {
+        var model = await AdminFleetService.GetCarForEditAsync(carId);
+        if (model is null)
+        {
+            feedbackError = true;
+            feedbackMessage = "Car not found.";
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["Title"] = "Edit car",
+            ["SubmitText"] = "Save",
+            ["Model"] = model,
+            ["Categories"] = categories
+        };
+
+        var dialog = await DialogService.ShowAsync<FleetCarUpsertDialog>("Edit car", parameters, BuildDialogOptions());
+        var result = await dialog.Result;
+
+        if (result.Canceled || result.Data is not AdminFleetCarFormModel payload)
+        {
+            return;
+        }
+
+        var ok = await AdminFleetService.UpdateCarAsync(payload);
+        feedbackError = !ok;
+        feedbackMessage = ok ? "Car updated successfully." : "Cannot update car. Check registration number and data.";
+        await LoadDataAsync();
+    }
+
+    private async Task OpenDeleteDialogAsync(int carId, string carName)
+    {
+        var parameters = new DialogParameters
+        {
+            ["CarName"] = carName
+        };
+
+        var dialog = await DialogService.ShowAsync<FleetCarDeleteDialog>("Delete car", parameters, BuildDialogOptions());
+        var result = await dialog.Result;
+
+        if (result.Canceled)
+        {
+            return;
+        }
+
+        var ok = await AdminFleetService.DeleteCarAsync(carId);
+        feedbackError = !ok;
+        feedbackMessage = ok ? "Car deleted successfully." : "Cannot delete car. It may have rentals assigned.";
+        await LoadDataAsync();
+    }
+
+    private static DialogOptions BuildDialogOptions()
+    {
+        return new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            CloseButton = false,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small
+        };
+    }
+
+    private static string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Available" => "status-available",
+            "Rented" => "status-rented",
+            _ => "status-unavailable"
+        };
+    }
+}

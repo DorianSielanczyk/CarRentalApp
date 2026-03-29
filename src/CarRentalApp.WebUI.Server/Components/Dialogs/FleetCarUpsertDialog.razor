@@ -1,0 +1,140 @@
+@using CarRentalApp.Domain.Interfaces
+@using MudBlazor
+
+<MudDialog Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <TitleContent>
+        <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
+                <MudIcon Icon="@Icons.Material.Filled.DirectionsCar" Class="me-2" />
+                @Title
+            </MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        @if (!string.IsNullOrWhiteSpace(validationError))
+        {
+            <div class="alert alert-danger py-2 mt-3">@validationError</div>
+        }
+
+        <div class="mb-2 mt-3">
+            <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Brand</label>
+            <input class="form-control" @bind="editModel.Brand" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Model</label>
+            <input class="form-control" @bind="editModel.Model" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Registration number</label>
+            <input class="form-control" @bind="editModel.RegistrationNumber" />
+        </div>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Year</label>
+                <input class="form-control" type="number" @bind="editModel.YearOfProduction" />
+            </div>
+            <div class="col-6">
+                <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Mileage</label>
+                <input class="form-control" type="number" @bind="editModel.Mileage" />
+            </div>
+        </div>
+
+        <div class="row g-2 mt-1">
+            <div class="col-6">
+                <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Price/day</label>
+                <input class="form-control" type="number" step="0.01" @bind="editModel.PricePerDay" />
+            </div>
+            <div class="col-6">
+                <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Category</label>
+                <select class="form-select" @bind="editModel.CategoryId">
+                    <option value="0">Select category</option>
+                    @foreach (var category in Categories)
+                    {
+                        <option value="@category.CategoryId">@category.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="form-check mt-3">
+            <input id="available-check" class="form-check-input" type="checkbox" @bind="editModel.IsAvailable" />
+            <label class="form-check-label" for="available-check" style="color: rgba(255, 255, 255, 0.85);">Available</label>
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Text"
+                   OnClick="Cancel"
+                   Style="color: #dc3545; text-transform: uppercase; font-weight: 500;">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   OnClick="Submit"
+                   Style="background-color: #217418; color: white; text-transform: uppercase; font-weight: 500;">
+            @SubmitText
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string Title { get; set; } = "Car";
+
+    [Parameter]
+    public string SubmitText { get; set; } = "Save";
+
+    [Parameter]
+    public AdminFleetCarFormModel Model { get; set; } = new();
+
+    [Parameter]
+    public List<AdminFleetCategoryItem> Categories { get; set; } = [];
+
+    private AdminFleetCarFormModel editModel = new();
+    private string validationError = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        editModel = new AdminFleetCarFormModel
+        {
+            Id = Model.Id,
+            Brand = Model.Brand,
+            Model = Model.Model,
+            RegistrationNumber = Model.RegistrationNumber,
+            YearOfProduction = Model.YearOfProduction,
+            PricePerDay = Model.PricePerDay,
+            Mileage = Model.Mileage,
+            IsAvailable = Model.IsAvailable,
+            CategoryId = Model.CategoryId
+        };
+    }
+
+    private void Submit()
+    {
+        validationError = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(editModel.Brand) ||
+            string.IsNullOrWhiteSpace(editModel.Model) ||
+            string.IsNullOrWhiteSpace(editModel.RegistrationNumber) ||
+            editModel.CategoryId <= 0 ||
+            editModel.YearOfProduction < 1950 ||
+            editModel.PricePerDay <= 0 ||
+            editModel.Mileage < 0)
+        {
+            validationError = "Please provide valid data in all required fields.";
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(editModel));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

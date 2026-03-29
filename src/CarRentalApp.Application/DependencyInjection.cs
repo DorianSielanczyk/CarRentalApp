@@ -17,6 +17,7 @@ namespace CarRentalApp.Application
             services.AddScoped<IAdminBreakdownReportsService, AdminBreakdownReportsService>();
             services.AddScoped<IMyRentalsService, MyRentalsService>();
             services.AddScoped<IAdminClientsService, AdminClientsService>();
+            services.AddScoped<IAdminFleetService, AdminFleetService>();
 
             return services;
         }

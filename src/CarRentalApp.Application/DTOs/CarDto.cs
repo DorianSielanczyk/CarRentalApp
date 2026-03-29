@@ -10,6 +10,7 @@ namespace CarRentalApp.Application.DTOs
         public decimal PricePerDay { get; set; }
         public int Mileage { get; set; }
         public bool IsAvailable { get; set; }
+        public string Status { get; set; } = string.Empty;
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
         public string MainPhotoUrl { get; set; } = string.Empty;

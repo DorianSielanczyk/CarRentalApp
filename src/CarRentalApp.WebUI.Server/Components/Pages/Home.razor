@@ -86,16 +86,22 @@
                                 </div>
                             }
 
-                            @if (car.IsAvailable)
+                            @if (car.Status == "Available")
                             {
                                 <span class="badge bg-success position-absolute top-0 end-0 m-2">
                                     <i class="bi bi-check-circle-fill"></i> Available
                                 </span>
                             }
-                            else
+                            else if (car.Status == "Rented")
                             {
                                 <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                                     <i class="bi bi-x-circle-fill"></i> Rented
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary position-absolute top-0 end-0 m-2">
+                                    <i class="bi bi-dash-circle-fill"></i> Unavailable
                                 </span>
                             }
 
@@ -129,8 +135,10 @@
                                     <i class="bi bi-info-circle"></i> Details
                                 </button>
                                 <button class="btn btn-primary btn-sm"
-                                        @onclick="() => BookCar(car.Id)">
-                                    <i class="bi bi-calendar-check"></i> @(car.IsAvailable ? "Book now" : "Check availability")
+                                        @onclick="() => BookCar(car.Id)"
+                                        disabled="@(car.Status == "Unavailable")">
+                                    <i class="bi bi-calendar-check"></i>
+                                    @(car.Status == "Available" ? "Book now" : car.Status == "Rented" ? "Check availability" : "Unavailable")
                                 </button>
                             </div>
                         </div>
@@ -255,6 +263,12 @@
 
     private void BookCar(int carId)
     {
+        var car = allCars.FirstOrDefault(c => c.Id == carId);
+        if (car is null || car.Status == "Unavailable")
+        {
+            return;
+        }
+
         Navigation.NavigateTo($"/booking/{carId}");
     }
 }
