@@ -17,6 +17,8 @@ namespace CarRentalApp.Domain.Interfaces
         public int CarId { get; set; }
         public string Brand { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
+        public int CategoryId { get; set; }
+        public string MainPhotoUrl { get; set; } = string.Empty;
         public string RegistrationNumber { get; set; } = string.Empty;
         public int YearOfProduction { get; set; }
         public decimal PricePerDay { get; set; }
@@ -58,5 +60,20 @@ namespace CarRentalApp.Domain.Interfaces
 
         [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
+
+        public string MainPhotoUrl { get; set; } = string.Empty;
+
+        public string AdditionalPhotoUrls { get; set; } = string.Empty;
+
+        public List<AdminFleetCarPhotoItem> ExistingPhotos { get; set; } = [];
+
+        public List<int> DeletedPhotoIds { get; set; } = [];
+    }
+
+    public sealed class AdminFleetCarPhotoItem
+    {
+        public int Id { get; set; }
+        public string PhotoUrl { get; set; } = string.Empty;
+        public bool IsMain { get; set; }
     }
 }

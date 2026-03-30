@@ -1,0 +1,243 @@
+﻿@page "/admin/employeemanagement"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin")]
+@inject IAdminEmployeeService AdminEmployeeService
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="employee-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Employee Management</h3>
+            <a href="/" class="btn back-button">
+                <i class="bi bi-arrow-left"></i> Back to homepage
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container my-3">
+    <div class="row g-2 mb-3">
+        <div class="col-md-8">
+            <input class="form-control" placeholder="Search by name or email" @bind="search" />
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" @bind="statusOnTop">
+                <option value="Admin">Admin</option>
+                <option value="Worker">Worker</option>
+                <option value="Employee">Employee</option>
+            </select>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(feedbackMessage))
+    {
+        <div class="alert @(feedbackError ? "alert-danger" : "alert-success") mb-3">
+            @feedbackMessage
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="report-form-card">
+            <p class="mb-0">Loading employees...</p>
+        </div>
+    }
+    else if (!FilteredEmployees().Any())
+    {
+        <div class="report-form-card">
+            <p class="mb-0">No employees found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="employees-list">
+            @foreach (var employee in FilteredEmployees())
+            {
+                <div class="report-form-card employee-card">
+                    <div class="employee-main-name">@employee.DisplayName</div>
+
+                    <div class="employee-body-row"> 
+                        <div class="employee-details-grid">
+                            <div><strong>Email:</strong> @employee.Email</div>
+                            <div>
+                                <strong>Status:</strong>
+                                <span class="status-pill @GetStatusClass(employee.Status)">@employee.Status</span>
+                            </div>
+                        </div>
+
+                        <div class="employee-actions">
+                            <button type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    disabled="@IsProtectedAdmin(employee)"
+                                    @onclick="() => OpenStatusDialogAsync(employee)">
+                                Change status
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline-danger btn-sm"
+                                    disabled="@(employee.UserId == currentUserId || IsProtectedAdmin(employee))"
+                                    @onclick="() => OpenDeleteDialogAsync(employee)">
+                                Delete user
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<AdminEmployeeListItem> employees = [];
+    private bool isLoading = true;
+    private string search = string.Empty;
+    private string statusOnTop = "Admin";
+    private string feedbackMessage = string.Empty;
+    private bool feedbackError;
+    private string currentUserId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+        await LoadEmployeesAsync();
+    }
+
+    private async Task LoadEmployeesAsync()
+    {
+        isLoading = true;
+        employees = await AdminEmployeeService.LoadEmployeesAsync();
+        isLoading = false;
+    }
+
+    private IEnumerable<AdminEmployeeListItem> FilteredEmployees()
+    {
+        var query = employees.Where(e =>
+            string.IsNullOrWhiteSpace(search) ||
+            e.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            e.Email.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+        return query
+            .OrderBy(e => GetStatusPriority(e.Status))
+            .ThenBy(e => e.DisplayName)
+            .ThenBy(e => e.Email);
+    }
+
+    private int GetStatusPriority(string status)
+    {
+        if (string.Equals(status, statusOnTop, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        return status switch
+        {
+            "Admin" => 1,
+            "Worker" => 2,
+            "Employee" => 3,
+            _ => 4
+        };
+    }
+
+    private async Task OpenStatusDialogAsync(AdminEmployeeListItem employee)
+    {
+        if (IsProtectedAdmin(employee))
+        {
+            feedbackError = true;
+            feedbackMessage = "Protected admin account status cannot be changed.";
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["EmployeeName"] = employee.DisplayName,
+            ["CurrentStatus"] = employee.Status
+        };
+
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EmployeeStatusDialog>("Change employee status", parameters, options);
+        var result = await dialog.Result;
+
+        if (result.Canceled || result.Data is not string selectedStatus)
+        {
+            return;
+        }
+
+        var updateResult = await AdminEmployeeService.UpdateEmployeeStatusAsync(employee.UserId, selectedStatus);
+        feedbackError = !updateResult.Success;
+        feedbackMessage = updateResult.Message;
+
+        if (updateResult.Success)
+        {
+            await LoadEmployeesAsync();
+        }
+    }
+
+    private async Task OpenDeleteDialogAsync(AdminEmployeeListItem employee)
+    {
+        if (IsProtectedAdmin(employee))
+        {
+            feedbackError = true;
+            feedbackMessage = "Protected admin account cannot be deleted.";
+            return;
+        }
+
+        if (employee.UserId == currentUserId)
+        {
+            feedbackError = true;
+            feedbackMessage = "You cannot delete your own account.";
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            ["EmployeeName"] = employee.DisplayName
+        };
+
+        var options = new DialogOptions
+        {
+            FullWidth = true,
+            MaxWidth = MaxWidth.Small,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EmployeeDeleteDialog>("Delete user", parameters, options);
+        var result = await dialog.Result;
+
+        if (result.Canceled)
+        {
+            return;
+        }
+
+        var deleteResult = await AdminEmployeeService.DeleteEmployeeAsync(employee.UserId, currentUserId);
+        feedbackError = !deleteResult.Success;
+        feedbackMessage = deleteResult.Message;
+
+        if (deleteResult.Success)
+        {
+            await LoadEmployeesAsync();
+        }
+    }
+
+    private static string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Admin" => "status-admin",
+            "Worker" => "status-worker",
+            _ => "status-employee"
+        };
+    }
+
+    private static bool IsProtectedAdmin(AdminEmployeeListItem employee)
+    {
+        return employee.Email.Equals("admin@carrental.com", StringComparison.OrdinalIgnoreCase);
+    }
+}

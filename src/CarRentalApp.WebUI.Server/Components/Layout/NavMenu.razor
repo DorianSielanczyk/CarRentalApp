@@ -69,6 +69,21 @@
             </AuthorizeView>
         </div>
 
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <hr class="my-3" />
+                    <div class="nav-item px-3">
+                        <strong class="text-white-50 small">ADMINISTRATOR</strong>
+                    </div>
+
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/employeemanagement">
+                            <span class="bi bi-person-badge-fill" aria-hidden="true"></span> Employee Management
+                        </NavLink>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+
         <div style="margin-top: auto;">
             <hr />
 

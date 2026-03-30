@@ -15,15 +15,30 @@
 .clients-header {
     border-bottom: 1px solid #292524;
     background-color: white;
+    padding: 0;
+    height: 76px;
+    display: flex;
+    align-items: center;
+}
+
+.clients-header .container {
+    width: 100%;
+}
+
+.filter-header {
+    border-bottom: 1px solid #292524;
+    border-top: 0;
+    background-color: white;
     padding: 1rem 0;
+    margin-top: 0;
     position: sticky;
     top: 0;
-    z-index: 999;
+    z-index: 1002;
 }
 
 .back-button {
     color: #292524;
-    border-color: #292524;
+    border-color: #292524;      
 }
 
 .back-button:hover {
@@ -42,26 +57,93 @@
 .client-main-name {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0;
     color: #1f2937;
 }
 
 .fleet-card {
-    display: grid;
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.fleet-title-row {
+    width: 100%;
+    min-height: 1.6rem;
+    display: flex;
+    align-items: center;
+}
+
+.fleet-body-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fleet-left-side {
+    min-width: 130px;
+    max-width: 130px;
+}
+
+.fleet-main-photo-wrapper {
+    width: 130px;
+    height: 130px;
+}
+
+.fleet-main-photo,
+.fleet-main-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.fleet-main-photo {
+    object-fit: cover;
+    display: block;
+}
+
+.fleet-main-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-size: 2rem;
 }
 
 .fleet-details-grid {
+    flex: 1;
     display: grid;
-    gap: 0.35rem;
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+    gap: 0.35rem 0.85rem;
     color: #374151;
     line-height: 1.35;
+    margin-top: 0;
+    align-self: center;
 }
 
 .fleet-actions {
+    margin-left: auto;
+    min-width: 120px;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
     gap: 0.5rem;
+    align-self: center;
+}
+
+.fleet-actions .btn {
+    width: 120px;
+}
+
+.fleet-actions .btn:focus,
+.fleet-actions .btn:active,
+.fleet-actions .btn:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 
 .add-button {
@@ -100,4 +182,66 @@
 .status-unavailable {
     background-color: #e5e7eb;
     color: #374151;
+}
+
+.form-control {
+    border-color: #292524;
+}
+
+.form-control:focus {
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem;
+}
+
+.form-select {
+    border-color: #292524;
+}
+
+.form-select:focus {
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem;
+}
+
+.btn-outline-secondary {
+    color: #292524;
+    border-color: #292524;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #686868;
+    border-color: #686868;
+    color: white;
+}
+
+.filter-header .btn:focus,
+.filter-header .btn:active,
+.filter-header .btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (max-width: 992px) {
+
+    .fleet-body-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .fleet-left-side {
+        min-width: auto;
+        max-width: none;
+    }
+
+    .fleet-main-photo-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+
+    .fleet-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fleet-actions {
+        width: 100%;
+        margin-left: 0;
+        align-items: stretch;
+    }
 }

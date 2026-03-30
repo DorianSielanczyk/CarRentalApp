@@ -1,11 +1,11 @@
 @using MudBlazor
 
-<MudDialog Class="fleet-delete-dialog" Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+<MudDialog Class="employee-delete-dialog" Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
     <TitleContent>
         <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
             <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
                 <MudIcon Icon="@Icons.Material.Filled.Delete" Class="me-2" />
-                Delete car
+                Delete user
             </MudText>
         </div>
     </TitleContent>
@@ -13,7 +13,7 @@
     <DialogContent>
         <MudText Typo="Typo.body1" Class="mt-3" Style="color: rgba(255, 255, 255, 0.9);">
             Are you sure you want to delete:
-            <strong>@CarName</strong>?
+            <strong>@EmployeeName</strong>?
         </MudText>
         <MudText Typo="Typo.body2" Class="mt-2" Style="color: rgba(255, 255, 255, 0.7);">
             This operation cannot be undone.
@@ -39,9 +39,9 @@
 </MudDialog>
 
 <style>
-    .fleet-delete-dialog .dialog-action-btn:focus,
-    .fleet-delete-dialog .dialog-action-btn:active,
-    .fleet-delete-dialog .dialog-action-btn:focus-visible {
+    .employee-delete-dialog .dialog-action-btn:focus,
+    .employee-delete-dialog .dialog-action-btn:active,
+    .employee-delete-dialog .dialog-action-btn:focus-visible {
         outline: none !important;
         box-shadow: none !important;
     }
@@ -52,7 +52,7 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public string CarName { get; set; } = string.Empty;
+    public string EmployeeName { get; set; } = string.Empty;
 
     private void ConfirmDelete() => MudDialog.Close(DialogResult.Ok(true));
 

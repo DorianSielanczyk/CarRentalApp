@@ -1,0 +1,160 @@
+﻿::deep .form-control {
+    border-color: #292524;
+}
+
+::deep .form-control:focus,
+::deep .form-control:active,
+::deep .form-control:focus-visible {
+    border-color: #292524 !important;
+    outline: none !important;
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem !important;
+}
+
+::deep .form-select {
+    border-color: #292524;
+}
+
+::deep .form-select:focus,
+::deep .form-select:active,
+::deep .form-select:focus-visible {
+    border-color: #292524 !important;
+    outline: none !important;
+    box-shadow: white 0px 0px 0px 0.1rem, #292524 0px 0px 0px 0.15rem !important;
+}
+
+.employee-header {
+    border-bottom: 1px solid #292524;
+    background-color: white;
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.back-button {
+    color: #292524;
+    border-color: #292524;
+}
+
+.back-button:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.back-button:focus,
+.back-button:active,
+.back-button:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.employees-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.report-form-card {
+    background-color: #f8f9fa;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    width: 100%;
+    text-align: left;
+}
+
+.employee-card {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.employee-body-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.employee-main-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+    color: #1f2937;
+}
+
+.employee-details-grid {
+    flex: 1;
+    display: grid;
+    gap: 0.35rem;
+    color: #374151;
+    line-height: 1.35;
+}
+
+.employee-actions {
+    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.employee-actions .btn {
+    min-width: 130px;
+}
+
+.employee-actions .btn:focus,
+.employee-actions .btn:active,
+.employee-actions .btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-admin {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-worker {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-employee {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-outline-secondary {
+    color: #292524;
+    border-color: #292524;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #686868;
+    border-color: #686868;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .employee-body-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .employee-actions {
+        flex-direction: column;
+        align-items: stretch;
+        margin-left: 0;
+    }
+
+    .employee-actions .btn {
+        width: 100%;
+    }
+}

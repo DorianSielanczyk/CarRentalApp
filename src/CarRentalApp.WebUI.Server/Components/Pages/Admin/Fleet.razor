@@ -1,7 +1,6 @@
 @page "/admin/fleetmanagement"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Worker,Admin")]
-@using CarRentalApp.Domain.Interfaces
 @inject IAdminFleetService AdminFleetService
 @inject IDialogService DialogService
 
@@ -9,9 +8,46 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
             <h3 class="mb-0">Fleet Management</h3>
-            <a href="/" class="btn btn-outline-secondary back-button">
+            <a href="/" class="btn back-button">
                 <i class="bi bi-arrow-left"></i> Back to homepage
             </a>
+        </div>
+    </div>
+</div>
+
+<div class="filter-header">
+    <div class="container">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <input type="text"
+                       class="form-control"
+                       placeholder="Search by brand or model..."
+                       @bind="searchQuery"
+                       @bind:event="oninput" />
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="selectedCategoryId">
+                    <option value="0">All Categories</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.CategoryId">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="selectedPriceRange">
+                    <option value="all">Any Price</option>
+                    <option value="0-50">Under $50/day</option>
+                    <option value="50-100">$50 - $100/day</option>
+                    <option value="100-150">$100 - $150/day</option>
+                    <option value="150+">Over $150/day</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -30,43 +66,67 @@
             <p class="mb-0">Loading fleet...</p>
         </div>
     }
-    else if (!cars.Any())
-    {
-        <div class="report-form-card">
-            <p class="mb-0">No cars found.</p>
-        </div>
-    }
     else
     {
-        <div class="clients-list">
-            @foreach (var car in cars)
-            {
-                <div class="report-form-card fleet-card">
-                    <div class="client-main-name">@car.Brand @car.Model</div>
+        var filteredCars = GetFilteredCars().ToList();
 
-                    <div class="fleet-details-grid">
-                        <div><strong>Registration:</strong> @car.RegistrationNumber</div>
-                        <div><strong>Year:</strong> @car.YearOfProduction</div>
-                        <div><strong>Mileage:</strong> @car.Mileage km</div>
-                        <div><strong>Price/day:</strong> $@car.PricePerDay.ToString("N2")</div>
-                        <div><strong>Category:</strong> @car.CategoryName</div>
-                        <div>
-                            <strong>Status:</strong>
-                            <span class="status-pill @GetStatusClass(car.Status)">@car.Status</span>
+        if (!filteredCars.Any())
+        {
+            <div class="report-form-card">
+                <p class="mb-0">No cars found.</p>
+            </div>
+        }
+        else
+        {
+            <div class="clients-list">
+                @foreach (var car in filteredCars)
+                {
+                    <div class="report-form-card fleet-card">
+                        <div class="fleet-title-row">
+                            <div class="client-main-name">@car.Brand @car.Model</div>
+                        </div>
+
+                        <div class="fleet-body-row">
+                            <div class="fleet-left-side">
+                            <div class="fleet-main-photo-wrapper">
+                                @if (!string.IsNullOrWhiteSpace(car.MainPhotoUrl))
+                                {
+                                    <img src="@car.MainPhotoUrl" class="fleet-main-photo" alt="@($"{car.Brand} {car.Model}")" />
+                                }
+                                else
+                                {
+                                    <div class="fleet-main-photo-placeholder">
+                                        <i class="bi bi-car-front-fill"></i>
+                                    </div>
+                                }
+                            </div>
+                            </div>
+
+                            <div class="fleet-details-grid">
+                                <div><strong>Registration:</strong> @car.RegistrationNumber</div>
+                                <div><strong>Year:</strong> @car.YearOfProduction</div>
+                                <div><strong>Mileage:</strong> @car.Mileage.ToString("N0") km</div>
+                                <div><strong>Price/day:</strong> $@car.PricePerDay.ToString("N2")</div>
+                                <div><strong>Category:</strong> @car.CategoryName</div>
+                                <div>
+                                    <strong>Status:</strong>
+                                    <span class="status-pill @GetStatusClass(car.Status)">@car.Status</span>
+                                </div>
+                            </div>
+
+                            <div class="fleet-actions">
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenEditDialogAsync(car.CarId)">
+                                    Edit data
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" @onclick="() => OpenDeleteDialogAsync(car.CarId, GetCarName(car))">
+                                    Delete car
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="fleet-actions">
-                        <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenEditDialogAsync(car.CarId)">
-                            Edit data
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" @onclick="() => OpenDeleteDialogAsync(car.CarId, car.Brand + car.Model)">
-                            Delete car
-                        </button>
-                    </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     }
 </div>
 
@@ -84,6 +144,9 @@
     private bool isLoading = true;
     private string feedbackMessage = string.Empty;
     private bool feedbackError;
+    private string searchQuery = string.Empty;
+    private int selectedCategoryId;
+    private string selectedPriceRange = "all";
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,6 +159,41 @@
         cars = await AdminFleetService.LoadCarsAsync();
         categories = await AdminFleetService.LoadCategoriesAsync();
         isLoading = false;
+    }
+
+    private IEnumerable<AdminFleetCarListItem> GetFilteredCars()
+    {
+        IEnumerable<AdminFleetCarListItem> query = cars;
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            query = query.Where(car =>
+                car.Brand.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                car.Model.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (selectedCategoryId != 0)
+        {
+            query = query.Where(car => car.CategoryId == selectedCategoryId);
+        }
+
+        query = selectedPriceRange switch
+        {
+            "0-50" => query.Where(car => car.PricePerDay < 50),
+            "50-100" => query.Where(car => car.PricePerDay >= 50 && car.PricePerDay <= 100),
+            "100-150" => query.Where(car => car.PricePerDay > 100 && car.PricePerDay <= 150),
+            "150+" => query.Where(car => car.PricePerDay > 150),
+            _ => query
+        };
+
+        return query.OrderBy(car => car.Brand).ThenBy(car => car.Model);
+    }
+
+    private void ClearFilters()
+    {
+        searchQuery = string.Empty;
+        selectedCategoryId = 0;
+        selectedPriceRange = "all";
     }
 
     private async Task OpenAddDialogAsync()
@@ -200,5 +298,10 @@
             "Rented" => "status-rented",
             _ => "status-unavailable"
         };
+    }
+
+    private static string GetCarName(AdminFleetCarListItem car)
+    {
+        return $"{car.Brand} {car.Model}";
     }
 }

@@ -32,6 +32,59 @@
             <input class="form-control" @bind="editModel.RegistrationNumber" />
         </div>
 
+        <div class="mb-2">
+            <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Main photo URL/path</label>
+            <input class="form-control" @bind="editModel.MainPhotoUrl" placeholder="/images/cars/example.jpg" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Additional photo URL(s)</label>
+            <textarea class="form-control"
+                      rows="2"
+                      @bind="editModel.AdditionalPhotoUrls"
+                      placeholder="/images/cars/example-2.jpg, /images/cars/example-3.jpg"></textarea>
+            <small style="color: rgba(255, 255, 255, 0.6);">Use comma, semicolon or new line to add multiple photos.</small>
+        </div>
+
+        @if (editModel.ExistingPhotos.Any())
+        {
+            <div class="mb-2">
+                <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Existing photos</label>
+
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var photo in editModel.ExistingPhotos)
+                    {
+                        var markedForDelete = IsPhotoMarkedForDelete(photo.Id);
+
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded"
+                             style="background-color: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); @(markedForDelete ? "opacity: 0.55;" : string.Empty)">
+                            <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                                <img src="@photo.PhotoUrl"
+                                     alt="Car photo"
+                                     style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);" />
+
+                                <div style="min-width: 0;">
+                                    <div style="color: rgba(255, 255, 255, 0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">
+                                        @photo.PhotoUrl
+                                    </div>
+                                    @if (photo.IsMain)
+                                    {
+                                        <small style="color: #9ad29a;">Main photo</small>
+                                    }
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-sm photo-delete-btn @(markedForDelete ? "btn-outline-warning" : "btn-outline-danger")"
+                                    @onclick="() => TogglePhotoDelete(photo.Id)">
+                                @(markedForDelete ? "Undo" : "Delete")
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
         <div class="row g-2">
             <div class="col-6">
                 <label class="form-label" style="color: rgba(255, 255, 255, 0.85);">Year</label>
@@ -82,6 +135,16 @@
     </DialogActions>
 </MudDialog>
 
+<style>
+    .photo-delete-btn:focus,
+    .photo-delete-btn:active,
+    .photo-delete-btn:focus-visible,
+    .photo-delete-btn:active:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+</style>
+
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
@@ -113,8 +176,36 @@
             PricePerDay = Model.PricePerDay,
             Mileage = Model.Mileage,
             IsAvailable = Model.IsAvailable,
-            CategoryId = Model.CategoryId
+            CategoryId = Model.CategoryId,
+            MainPhotoUrl = Model.MainPhotoUrl,
+            AdditionalPhotoUrls = string.Empty,
+            ExistingPhotos = Model.ExistingPhotos
+                .Select(p => new AdminFleetCarPhotoItem
+                {
+                    Id = p.Id,
+                    PhotoUrl = p.PhotoUrl,
+                    IsMain = p.IsMain
+                })
+                .ToList(),
+            DeletedPhotoIds = []
         };
+    }
+
+    private bool IsPhotoMarkedForDelete(int photoId)
+    {
+        return editModel.DeletedPhotoIds.Contains(photoId);
+    }
+
+    private void TogglePhotoDelete(int photoId)
+    {
+        if (editModel.DeletedPhotoIds.Contains(photoId))
+        {
+            editModel.DeletedPhotoIds.Remove(photoId);
+        }
+        else
+        {
+            editModel.DeletedPhotoIds.Add(photoId);
+        }
     }
 
     private void Submit()
