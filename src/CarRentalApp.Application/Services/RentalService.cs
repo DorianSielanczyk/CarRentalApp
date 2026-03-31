@@ -43,6 +43,9 @@ namespace CarRentalApp.Application.Services
             if (car == null)
                 throw new InvalidOperationException("Car not found");
 
+            if (!car.IsAvailable)
+                throw new InvalidOperationException("This car is unavailable");
+
             var existingRentals = await _unitOfWork.Rentals.GetRentalsByCarIdAsync(rentalDto.CarId);
             var hasOverlap = existingRentals.Any(r =>
                 r.Status != "Cancelled" &&
@@ -67,12 +70,6 @@ namespace CarRentalApp.Application.Services
             };
 
             await _unitOfWork.Rentals.AddAsync(rental);
-
-            var today = DateTime.Today;
-            var isRentedToday = rental.RentalDate.Date <= today && rental.ReturnDate.Date >= today;
-            car.IsAvailable = !isRentedToday;
-            _unitOfWork.Cars.Update(car);
-
             await _unitOfWork.SaveChangesAsync();
 
             return rental.Id;
@@ -87,13 +84,6 @@ namespace CarRentalApp.Application.Services
             rental.Status = "Completed";
             _unitOfWork.Rentals.Update(rental);
 
-            var car = await _unitOfWork.Cars.GetByIdAsync(rental.CarId);
-            if (car != null)
-            {
-                car.IsAvailable = true;
-                _unitOfWork.Cars.Update(car);
-            }
-
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
@@ -106,13 +96,6 @@ namespace CarRentalApp.Application.Services
 
             rental.Status = "Cancelled";
             _unitOfWork.Rentals.Update(rental);
-
-            var car = await _unitOfWork.Cars.GetByIdAsync(rental.CarId);
-            if (car != null)
-            {
-                car.IsAvailable = true;
-                _unitOfWork.Cars.Update(car);
-            }
 
             await _unitOfWork.SaveChangesAsync();
             return true;

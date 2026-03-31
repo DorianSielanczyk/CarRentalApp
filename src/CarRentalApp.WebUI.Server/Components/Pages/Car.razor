@@ -108,8 +108,8 @@ else if (car is not null)
                     <div class="info-item">
                         <i class="bi bi-check-circle"></i>
                         <strong>Availability:</strong>
-                        <span class="@(car.IsAvailable ? "text-success" : "text-danger")">
-                            @(car.IsAvailable ? "Available" : "Rented")
+                        <span class="@(car.Status == "Available" ? "text-success" : car.Status == "Rented" ? "text-danger" : "text-danger")">
+                            @(car.Status == "Available" ? "Available" : car.Status == "Rented" ? "Rented" : "Unavailable")
                         </span>
                     </div>
                 </div>

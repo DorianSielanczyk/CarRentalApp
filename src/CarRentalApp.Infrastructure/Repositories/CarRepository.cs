@@ -28,10 +28,12 @@ namespace CarRentalApp.Infrastructure.Repositories
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)
-                .Where(c => !c.Rentals.Any(r =>
-                    r.Status != "Cancelled" &&
-                    r.RentalDate.Date <= today &&
-                    r.ReturnDate.Date >= today))
+                .Where(c =>
+                    c.IsAvailable &&
+                    !c.Rentals.Any(r =>
+                        r.Status != "Cancelled" &&
+                        r.RentalDate.Date <= today &&
+                        r.ReturnDate.Date >= today))
                 .ToListAsync();
         }
 

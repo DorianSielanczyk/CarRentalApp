@@ -42,7 +42,8 @@ namespace CarRentalApp.Application.Services
                 .ToListAsync();
 
             var history = await _dbContext.BreakdownReports
-                .Include(r => r.Rental)
+                .Include(r => r.Rental)!
+                    .ThenInclude(r => r!.Car)
                 .Include(r => r.Notes)
                 .Where(r => r.Rental!.ClientId == client.Id)
                 .ToListAsync();

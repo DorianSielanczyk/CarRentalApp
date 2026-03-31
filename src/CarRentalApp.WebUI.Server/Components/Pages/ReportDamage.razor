@@ -122,6 +122,12 @@
                 @foreach (var r in history.OrderByDescending(x => x.CreatedAtUtc))
                 {
                     <div class="border p-2 mb-2">
+                        <div>
+                            <strong>#@r.Id</strong> -
+                            @(r.Rental?.Car is not null
+                                ? $"{r.Rental.Car.Brand} {r.Rental.Car.Model} ({r.Rental.Car.RegistrationNumber})"
+                                : "Unknown car (N/A)")
+                        </div>
                         <div><strong>@r.BreakdownType</strong> - @r.Status</div>
                         <div class="small text-muted">@r.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</div>
                         <div>@r.Description</div>
@@ -152,6 +158,7 @@
     private readonly List<IBrowserFile> selectedFiles = new();
     private string selectedFilesLabel = "No image selected";
     private string? formError;
+    private string currentUserEmail = "N/A";
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -163,22 +170,35 @@
 
     private async Task LoadDataAsync()
     {
-        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrWhiteSpace(userId))
+        try
         {
-            return;
+            var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            currentUserEmail = auth.User.FindFirstValue(ClaimTypes.Email)
+                ?? auth.User.Identity?.Name
+                ?? "N/A";
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return;
+            }
+
+            var (rentals, reports) = await ReportDamageService.LoadDataAsync(userId);
+
+            activeRentals.Clear();
+            activeRentals.AddRange(rentals ?? new List<Rental>());
+            history = reports ?? new List<BreakdownReport>();
+
+            if (activeRentals.Any())
+            {
+                selectedRentalId = activeRentals[0].Id;
+            }
         }
-
-        var (rentals, reports) = await ReportDamageService.LoadDataAsync(userId);
-
-        activeRentals.Clear();
-        activeRentals.AddRange(rentals);
-        history = reports;
-
-        if (activeRentals.Any())
+        catch
         {
-            selectedRentalId = activeRentals[0].Id;
+            formError = "Could not load damage data. Please try again.";
+            activeRentals.Clear();
+            history = new List<BreakdownReport>();
         }
     }
 
