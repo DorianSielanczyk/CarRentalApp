@@ -110,8 +110,8 @@
                 </EditForm>
             }
         </div>
-
-        <div class="report-form-card mt-3">
+    
+        <div class="report-form-card mt-3" tabindex="-1">
             <h5>My report history</h5>
             @if (!history.Any())
             {
@@ -119,7 +119,7 @@
             }
             else
             {
-                @foreach (var r in history.OrderByDescending(x => x.CreatedAtUtc))
+                @foreach (var r in PagedHistory)
                 {
                     <div class="border p-2 mb-2">
                         <div>
@@ -146,6 +146,15 @@
                         }
                     </div>
                 }
+
+                <div class="d-flex flex-column align-center">
+                    <MudPagination ShowFirstButton="true"
+                                   ShowLastButton="true"
+                                   Count="@HistoryTotalPages"
+                                   Class="mt-3 report-history-pagination"
+                                   Selected="@historyCurrentPage"
+                                   SelectedChanged="OnHistoryPageChanged" />
+                </div>
             }
         </div>
     </div>
@@ -159,6 +168,17 @@
     private string selectedFilesLabel = "No image selected";
     private string? formError;
     private string currentUserEmail = "N/A";
+
+    private const int HistoryPageSize = 5;
+    private int historyCurrentPage = 1;
+
+    private int HistoryTotalPages => Math.Max(1, (int)Math.Ceiling(history.Count / (double)HistoryPageSize));
+
+    private List<BreakdownReport> PagedHistory => history
+        .OrderByDescending(x => x.CreatedAtUtc)
+        .Skip((historyCurrentPage - 1) * HistoryPageSize)
+        .Take(HistoryPageSize)
+        .ToList();
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -189,6 +209,11 @@
             activeRentals.AddRange(rentals ?? new List<Rental>());
             history = reports ?? new List<BreakdownReport>();
 
+            if (historyCurrentPage > HistoryTotalPages)
+            {
+                historyCurrentPage = HistoryTotalPages;
+            }
+
             if (activeRentals.Any())
             {
                 selectedRentalId = activeRentals[0].Id;
@@ -199,6 +224,7 @@
             formError = "Could not load damage data. Please try again.";
             activeRentals.Clear();
             history = new List<BreakdownReport>();
+            historyCurrentPage = 1;
         }
     }
 
@@ -240,6 +266,7 @@
         Input = new();
         selectedFiles.Clear();
         selectedFilesLabel = "No image selected";
+        historyCurrentPage = 1;
 
         await LoadDataAsync();
     }
@@ -250,6 +277,12 @@
         formError = null;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    private void OnHistoryPageChanged(int page)
+    {
+        historyCurrentPage = page;
+        StateHasChanged();
     }
 
     private sealed class InputModel

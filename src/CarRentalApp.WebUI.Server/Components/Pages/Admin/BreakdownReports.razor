@@ -18,10 +18,10 @@
 <div class="container my-3">
     <div class="row g-2 mb-3">
         <div class="col-md-4">
-            <input class="form-control" placeholder="Registration number" @bind="registrationFilter" />
+            <input class="form-control" placeholder="Registration number" @bind="RegistrationFilter" @bind:event="oninput" />
         </div>
         <div class="col-md-4">
-            <select class="form-control" @bind="statusFilter">
+            <select class="form-control" @bind="StatusFilter">
                 <option value="">Open tickets</option>
                 @foreach (var s in Enum.GetValues<BreakdownStatus>())
                 {
@@ -31,52 +31,107 @@
         </div>
     </div>
 
-    @foreach (var r in FilteredReports())
+    @{
+        var filteredReports = FilteredReports().ToList();
+        var totalPages = CalculateTotalPages(filteredReports.Count);
+        var pagedReports = PaginatedReports(filteredReports).ToList();
+    }
+
+    @if (!filteredReports.Any())
     {
         <div class="report-form-card mb-3">
-            <div><strong>#@r.Id</strong> | @r.BreakdownType | @r.Status</div>
-            <div><strong>Car:</strong> @r.Rental?.Car?.Brand @r.Rental?.Car?.Model (@r.Rental?.Car?.RegistrationNumber)
-            </div>
-            <div><strong>Client:</strong> @r.Rental?.Client?.FirstName @r.Rental?.Client?.LastName</div>
-            <div><strong>Location:</strong> @r.LocationText (@r.Latitude, @r.Longitude)</div>
-            <div><strong>Description:</strong> @r.Description</div>
+            <p class="mb-0">No reports found.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var r in pagedReports)
+        {
+            <div class="report-form-card mb-3">
+                <div><strong>#@r.Id</strong> | @r.BreakdownType | @r.Status</div>
+                <div><strong>Car:</strong> @r.Rental?.Car?.Brand @r.Rental?.Car?.Model (@r.Rental?.Car?.RegistrationNumber)</div>
+                <div><strong>Client:</strong> @r.Rental?.Client?.FirstName @r.Rental?.Client?.LastName</div>
+                <div><strong>Location:</strong> @r.LocationText (@r.Latitude, @r.Longitude)</div>
+                <div><strong>Description:</strong> @r.Description</div>
 
-            @if (r.Notes.Any())
-            {
+                @if (r.Notes.Any())
+                {
+                    <div class="mt-2">
+                        <strong>Internal notes:</strong>
+                        @foreach (var n in r.Notes.OrderByDescending(x => x.CreatedAtUtc))
+                        {
+                            <div class="small text-muted">
+                                @n.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm") - @n.Note
+                            </div>
+                        }
+                    </div>
+                }
+
                 <div class="mt-2">
-                    <strong>Internal notes:</strong>
-                    @foreach (var n in r.Notes.OrderByDescending(x => x.CreatedAtUtc))
-                    {
-                        <div class="small text-muted">
-                            @n.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm") - @n.Note
-                        </div>
-                    }
+                    <label>Status:</label>
+                    <select class="form-control" value="@r.Status" @onchange="e => ChangeStatusAsync(r.Id, e.Value?.ToString())">
+                        @foreach (var s in Enum.GetValues<BreakdownStatus>())
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
                 </div>
-            }
 
-            <div class="mt-2">
-                <label>Status:</label>
-                <select class="form-control" value="@r.Status" @onchange="e => ChangeStatusAsync(r.Id, e.Value?.ToString())">
-                    @foreach (var s in Enum.GetValues<BreakdownStatus>())
-                    {
-                        <option value="@s">@s</option>
-                    }
-                </select>
+                <div class="mt-2">
+                    <input class="form-control" placeholder="Internal note" @bind="noteBuffer[r.Id]" />
+                    <button class="btn btn-primary mt-2" @onclick="() => AddNoteAsync(r.Id)">Add note</button>
+                </div>
             </div>
+        }
 
-            <div class="mt-2">
-                <input class="form-control" placeholder="Internal note" @bind="noteBuffer[r.Id]" />
-                <button class="btn btn-primary mt-2" @onclick="() => AddNoteAsync(r.Id)">Add note</button>
-            </div>
+        <div class="d-flex flex-column align-center">
+            <MudPagination ShowFirstButton="true"
+                           ShowLastButton="true"
+                           Count="@totalPages"
+                           Class="mt-4 breakdown-pagination"
+                           @bind-Selected="currentPage" />
         </div>
     }
 </div>
 
 @code {
+    private const int PageSize = 6;
+
     private List<BreakdownReport> reports = new();
     private string registrationFilter = string.Empty;
     private string statusFilter = string.Empty;
     private readonly Dictionary<int, string> noteBuffer = new();
+    private int currentPage = 1;
+
+    private string RegistrationFilter
+    {
+        get => registrationFilter;
+        set
+        {
+            if (registrationFilter == value)
+            {
+                return;
+            }
+
+            registrationFilter = value;
+            currentPage = 1;
+        }
+    }
+
+    private string StatusFilter
+    {
+        get => statusFilter;
+        set
+        {
+            if (statusFilter == value)
+            {
+                return;
+            }
+
+            statusFilter = value;
+            currentPage = 1;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,6 +160,24 @@
                 ? r.Status != BreakdownStatus.Closed
                 : r.Status.ToString() == statusFilter))
             .OrderByDescending(r => r.CreatedAtUtc);
+    }
+
+    private IEnumerable<BreakdownReport> PaginatedReports(IReadOnlyList<BreakdownReport> filteredReports)
+    {
+        var totalPages = CalculateTotalPages(filteredReports.Count);
+        if (currentPage > totalPages)
+        {
+            currentPage = totalPages;
+        }
+
+        return filteredReports
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize);
+    }
+
+    private static int CalculateTotalPages(int totalItems)
+    {
+        return Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
     }
 
     private async Task ChangeStatusAsync(int reportId, string? status)

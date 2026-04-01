@@ -22,11 +22,11 @@
                 <input type="text"
                        class="form-control"
                        placeholder="Search by brand or model..."
-                       @bind="searchQuery"
+                       @bind="SearchQuery"
                        @bind:event="oninput" />
             </div>
             <div class="col-md-3">
-                <select class="form-select" @bind="selectedCategoryId">
+                <select class="form-select" @bind="SelectedCategoryId">
                     <option value="0">All Categories</option>
                     @foreach (var category in categories)
                     {
@@ -35,7 +35,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <select class="form-select" @bind="selectedPriceRange">
+                <select class="form-select" @bind="SelectedPriceRange">
                     <option value="all">Any Price</option>
                     <option value="0-50">Under $50/day</option>
                     <option value="50-100">$50 - $100/day</option>
@@ -69,6 +69,8 @@
     else
     {
         var filteredCars = GetFilteredCars().ToList();
+        var totalPages = CalculateTotalPages(filteredCars.Count);
+        var pagedCars = PaginatedCars(filteredCars).ToList();
 
         if (!filteredCars.Any())
         {
@@ -79,7 +81,7 @@
         else
         {
             <div class="clients-list">
-                @foreach (var car in filteredCars)
+                @foreach (var car in pagedCars)
                 {
                     <div class="report-form-card fleet-card">
                         <div class="fleet-title-row">
@@ -88,18 +90,18 @@
 
                         <div class="fleet-body-row">
                             <div class="fleet-left-side">
-                            <div class="fleet-main-photo-wrapper">
-                                @if (!string.IsNullOrWhiteSpace(car.MainPhotoUrl))
-                                {
-                                    <img src="@car.MainPhotoUrl" class="fleet-main-photo" alt="@($"{car.Brand} {car.Model}")" />
-                                }
-                                else
-                                {
-                                    <div class="fleet-main-photo-placeholder">
-                                        <i class="bi bi-car-front-fill"></i>
-                                    </div>
-                                }
-                            </div>
+                                <div class="fleet-main-photo-wrapper">
+                                    @if (!string.IsNullOrWhiteSpace(car.MainPhotoUrl))
+                                    {
+                                        <img src="@car.MainPhotoUrl" class="fleet-main-photo" alt="@($"{car.Brand} {car.Model}")" />
+                                    }
+                                    else
+                                    {
+                                        <div class="fleet-main-photo-placeholder">
+                                            <i class="bi bi-car-front-fill"></i>
+                                        </div>
+                                    }
+                                </div>
                             </div>
 
                             <div class="fleet-details-grid">
@@ -126,6 +128,14 @@
                     </div>
                 }
             </div>
+
+            <div class="d-flex flex-column align-center">
+                <MudPagination ShowFirstButton="true"
+                               ShowLastButton="true"
+                               Count="@totalPages"
+                               Class="mt-4 fleet-pagination"
+                               @bind-Selected="currentPage" />
+            </div>
         }
     }
 </div>
@@ -139,6 +149,8 @@
 </div>
 
 @code {
+    private const int PageSize = 6;
+
     private List<AdminFleetCarListItem> cars = [];
     private List<AdminFleetCategoryItem> categories = [];
     private bool isLoading = true;
@@ -147,6 +159,52 @@
     private string searchQuery = string.Empty;
     private int selectedCategoryId;
     private string selectedPriceRange = "all";
+    private int currentPage = 1;
+
+    private string SearchQuery
+    {
+        get => searchQuery;
+        set
+        {
+            if (searchQuery == value)
+            {
+                return;
+            }
+
+            searchQuery = value;
+            currentPage = 1;
+        }
+    }
+
+    private int SelectedCategoryId
+    {
+        get => selectedCategoryId;
+        set
+        {
+            if (selectedCategoryId == value)
+            {
+                return;
+            }
+
+            selectedCategoryId = value;
+            currentPage = 1;
+        }
+    }
+
+    private string SelectedPriceRange
+    {
+        get => selectedPriceRange;
+        set
+        {
+            if (selectedPriceRange == value)
+            {
+                return;
+            }
+
+            selectedPriceRange = value;
+            currentPage = 1;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -189,11 +247,30 @@
         return query.OrderBy(car => car.Brand).ThenBy(car => car.Model);
     }
 
+    private IEnumerable<AdminFleetCarListItem> PaginatedCars(IReadOnlyList<AdminFleetCarListItem> filteredCars)
+    {
+        var totalPages = CalculateTotalPages(filteredCars.Count);
+        if (currentPage > totalPages)
+        {
+            currentPage = totalPages;
+        }
+
+        return filteredCars
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize);
+    }
+
+    private static int CalculateTotalPages(int totalItems)
+    {
+        return Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
+    }
+
     private void ClearFilters()
     {
         searchQuery = string.Empty;
         selectedCategoryId = 0;
         selectedPriceRange = "all";
+        currentPage = 1;
     }
 
     private async Task OpenAddDialogAsync()

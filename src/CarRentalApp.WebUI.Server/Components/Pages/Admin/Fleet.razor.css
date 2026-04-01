@@ -218,6 +218,18 @@
     box-shadow: none;
 }
 
+::deep .fleet-pagination .mud-pagination-item.mud-selected,
+::deep .fleet-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
+}
+
+.fleet-page-content[b-7x5zb3kur9] {
+    padding-bottom: 0px !important;
+}
+
+
 @media (max-width: 992px) {
 
     .fleet-body-row {

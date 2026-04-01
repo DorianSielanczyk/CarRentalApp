@@ -142,6 +142,13 @@
     color: white;
 }
 
+::deep .employee-pagination .mud-pagination-item.mud-selected,
+::deep .employee-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
+}
+
 @media (max-width: 768px) {
     .employee-body-row {
         flex-direction: column;

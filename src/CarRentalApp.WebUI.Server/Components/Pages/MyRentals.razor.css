@@ -191,3 +191,10 @@
     font-size: 0.85rem;
     padding: 0.45rem 0.8rem;
 }
+
+::deep .myrentals-pagination .mud-pagination-item.mud-selected,
+::deep .myrentals-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
+}

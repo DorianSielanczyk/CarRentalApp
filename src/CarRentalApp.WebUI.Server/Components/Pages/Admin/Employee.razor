@@ -19,10 +19,10 @@
 <div class="container my-3">
     <div class="row g-2 mb-3">
         <div class="col-md-8">
-            <input class="form-control" placeholder="Search by name or email" @bind="search" />
+            <input class="form-control" placeholder="Search by name or email" @bind="Search" @bind:event="oninput" />
         </div>
         <div class="col-md-4">
-            <select class="form-select" @bind="statusOnTop">
+            <select class="form-select" @bind="StatusOnTop">
                 <option value="Admin">Admin</option>
                 <option value="Worker">Worker</option>
                 <option value="Employee">User</option>
@@ -51,8 +51,12 @@
     }
     else
     {
+        var filteredEmployees = FilteredEmployees().ToList();
+        var totalPages = CalculateTotalPages(filteredEmployees.Count);
+        var pagedEmployees = PaginatedEmployees(filteredEmployees);
+
         <div class="employees-list">
-            @foreach (var employee in FilteredEmployees())
+            @foreach (var employee in pagedEmployees)
             {
                 <div class="report-form-card employee-card">
                     <div class="employee-main-name">@employee.DisplayName</div>
@@ -84,10 +88,20 @@
                 </div>
             }
         </div>
+
+        <div class="d-flex flex-column align-center">
+            <MudPagination ShowFirstButton="true"
+                           ShowLastButton="true"
+                           Count="@totalPages"
+                           Class="mt-4 employee-pagination"
+                           @bind-Selected="currentPage" />
+        </div>
     }
 </div>
 
 @code {
+    private const int PageSize = 6;
+
     private List<AdminEmployeeListItem> employees = [];
     private bool isLoading = true;
     private string search = string.Empty;
@@ -95,6 +109,37 @@
     private string feedbackMessage = string.Empty;
     private bool feedbackError;
     private string currentUserId = string.Empty;
+    private int currentPage = 1;
+
+    private string Search
+    {
+        get => search;
+        set
+        {
+            if (search == value)
+            {
+                return;
+            }
+
+            search = value;
+            currentPage = 1;
+        }
+    }
+
+    private string StatusOnTop
+    {
+        get => statusOnTop;
+        set
+        {
+            if (statusOnTop == value)
+            {
+                return;
+            }
+
+            statusOnTop = value;
+            currentPage = 1;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,6 +167,24 @@
             .OrderBy(e => GetStatusPriority(e.Status))
             .ThenBy(e => e.DisplayName)
             .ThenBy(e => e.Email);
+    }
+
+    private IEnumerable<AdminEmployeeListItem> PaginatedEmployees(IReadOnlyList<AdminEmployeeListItem> filteredEmployees)
+    {
+        var totalPages = CalculateTotalPages(filteredEmployees.Count);
+        if (currentPage > totalPages)
+        {
+            currentPage = totalPages;
+        }
+
+        return filteredEmployees
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize);
+    }
+
+    private static int CalculateTotalPages(int totalItems)
+    {
+        return Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
     }
 
     private int GetStatusPriority(string status)

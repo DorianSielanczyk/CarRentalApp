@@ -21,6 +21,10 @@
     padding: 2rem;
 }
 
+.report-form-card:focus {
+    outline: none;
+}
+
 .report-form-card ::deep .form-control.valid,
 .report-form-card ::deep .form-control.valid:focus,
 .report-form-card ::deep .form-control.valid.modified:not([type=checkbox]),
@@ -121,4 +125,11 @@
     margin-top: 0.4rem;
     color: #6c757d;
     font-size: 0.85rem;
+}
+
+::deep .report-history-pagination .mud-pagination-item.mud-selected,
+::deep .report-history-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
 }

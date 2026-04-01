@@ -18,7 +18,7 @@
 <div class="container my-3">
     <div class="row g-2 mb-3">
         <div class="col-md-6">
-            <input class="form-control" placeholder="Search by name or email" @bind="search" />
+            <input class="form-control" placeholder="Search by name or email" @bind="Search" @bind:event="oninput" />
         </div>
         <div class="col-md-3">
             <button type="button" class="btn btn-outline-secondary w-100" @onclick="ToggleReservationSort">
@@ -46,28 +46,57 @@
     }
     else
     {
-        <div class="clients-list">
-            @foreach (var client in FilteredClients())
-            {
-                <button type="button" class="report-form-card client-card-button" @onclick="() => OpenClientDialogAsync(client.ClientId)">
-                    <div class="client-main-name">@client.FirstName @client.LastName</div>
-                    <div class="client-details-grid">
-                        <div><strong>Email:</strong> @client.Email</div>
-                        <div><strong>Driver license:</strong> @client.DriverLicense</div>
-                        <div><strong>Reservations:</strong> @client.ReservationCount</div>
-                    </div>
-                </button>
-            }
+        <div class="clients-pagination-anchor" @ref="clientsTopRef" tabindex="-1">
+            <div class="clients-list">
+                @foreach (var client in PaginatedClients(FilteredClients().ToList()))
+                {
+                    <button type="button" class="report-form-card client-card-button" @onclick="() => OpenClientDialogAsync(client.ClientId)">
+                        <div class="client-main-name">@client.FirstName @client.LastName</div>
+                        <div class="client-details-grid">
+                            <div><strong>Email:</strong> @client.Email</div>
+                            <div><strong>Driver license:</strong> @client.DriverLicense</div>
+                            <div><strong>Reservations:</strong> @client.ReservationCount</div>
+                        </div>
+                    </button>
+                }
+            </div>
+
+            <div class="d-flex flex-column align-center">
+                <MudPagination ShowFirstButton="true"
+                               ShowLastButton="true"
+                               Count="@CalculateTotalPages(FilteredClients().Count())"
+                               Class="mt-4 clients-pagination"
+                               Selected="@currentPage"
+                               SelectedChanged="OnClientsPageChanged" />
+            </div>
         </div>
     }
 </div>
 
 @code {
+    private const int PageSize = 6;
+
     private List<AdminClientListItem> clients = [];
     private bool isLoading = true;
     private string search = string.Empty;
     private bool sortReservationsDescending = true;
     private bool sortAlphabeticallyAscending = true;
+    private int currentPage = 1;
+
+    private string Search
+    {
+        get => search;
+        set
+        {
+            if (search == value)
+            {
+                return;
+            }
+
+            search = value;
+            currentPage = 1;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,11 +107,13 @@
     private void ToggleReservationSort()
     {
         sortReservationsDescending = !sortReservationsDescending;
+        currentPage = 1;
     }
 
     private void ToggleAlphabeticalSort()
     {
         sortAlphabeticallyAscending = !sortAlphabeticallyAscending;
+        currentPage = 1;
     }
 
     private IEnumerable<AdminClientListItem> FilteredClients()
@@ -101,6 +132,24 @@
             : orderedQuery.ThenByDescending(c => c.LastName).ThenByDescending(c => c.FirstName);
 
         return orderedQuery;
+    }
+
+    private IEnumerable<AdminClientListItem> PaginatedClients(IReadOnlyList<AdminClientListItem> filteredClients)
+    {
+        var totalPages = CalculateTotalPages(filteredClients.Count);
+        if (currentPage > totalPages)
+        {
+            currentPage = totalPages;
+        }
+
+        return filteredClients
+            .Skip((currentPage - 1) * PageSize)
+            .Take(PageSize);
+    }
+
+    private static int CalculateTotalPages(int totalItems)
+    {
+        return Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
     }
 
     private async Task OpenClientDialogAsync(int clientId)
@@ -124,5 +173,14 @@
         };
 
         await DialogService.ShowAsync<ClientReservationsDialog>("Client details", parameters, options);
+    }
+
+    private ElementReference clientsTopRef;
+
+    private async Task OnClientsPageChanged(int page)
+    {
+        currentPage = page;
+        await Task.Yield();
+        await clientsTopRef.FocusAsync();
     }
 }

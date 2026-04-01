@@ -38,7 +38,7 @@
                 <div class="alert alert-danger">@errorMessage</div>
             }
 
-            @foreach (var rental in rentals)
+            @foreach (var rental in PagedRentals)
             {
                 var mainPhoto = rental.Car?.CarPhotos.FirstOrDefault(p => p.IsMain)?.PhotoUrl ?? "/images/cars/default.jpg";
                 var beforePhotos = rental.RentalPhotos.Where(p => p.PhotoType == "BeforePickup").ToList();
@@ -143,6 +143,14 @@
                     }
                 </div>
             }
+
+            <div class="d-flex flex-column align-center">
+                <MudPagination ShowFirstButton="true"
+                               ShowLastButton="true"
+                               Count="@TotalPages"
+                               Class="mt-4 myrentals-pagination"
+                               @bind-Selected="currentPage" />
+            </div>
         }
     </div>
 </div>
@@ -159,6 +167,18 @@
     private readonly Dictionary<int, string> afterFileNames = new();
 
     private string currentUserName = string.Empty;
+
+    private const int PageSize = 6;
+    private int currentPage = 1;
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredRentals.Count / (double)PageSize));
+
+    private List<Rental> PagedRentals => FilteredRentals
+        .Skip((currentPage - 1) * PageSize)
+        .Take(PageSize)
+        .ToList();
+
+    private List<Rental> FilteredRentals => rentals;
 
     protected override async Task OnInitializedAsync()
     {

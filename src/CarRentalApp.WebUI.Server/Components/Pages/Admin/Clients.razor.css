@@ -84,3 +84,14 @@
     color: #374151;
     line-height: 1.35;
 }
+
+::deep .clients-pagination .mud-pagination-item.mud-selected,
+::deep .clients-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
+}
+
+.clients-pagination-anchor:focus {
+    outline: none;
+}

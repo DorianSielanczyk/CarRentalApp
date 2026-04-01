@@ -120,6 +120,13 @@
         color: white;
     }
 
+::deep .home-pagination .mud-pagination-item.mud-selected,
+::deep .home-pagination button[aria-current="page"] {
+    background-color: #292521 !important;
+    border-color: #292521 !important;
+    color: #ffffff !important;
+}
+
 @media (max-width: 768px) {
     .hero-section {
         min-height: auto;
