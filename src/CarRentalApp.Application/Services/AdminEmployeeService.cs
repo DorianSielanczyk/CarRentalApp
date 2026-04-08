@@ -1,5 +1,4 @@
 using CarRentalApp.Domain.Interfaces;
-using CarRentalApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,44 +9,36 @@ namespace CarRentalApp.Application.Services
         private static readonly string[] ManagedRoles = ["User", "Worker", "Admin"];
         private const string ProtectedAdminEmail = "admin@carrental.com";
 
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<IdentityUser> _userManager;
 
-        public AdminEmployeeService(ApplicationDbContext dbContext, UserManager<IdentityUser> userManager)
+        public AdminEmployeeService(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
 
         public async Task<List<AdminEmployeeListItem>> LoadEmployeesAsync()
         {
-            var users = await _dbContext.Users
+            var users = await _userManager.Users
                 .AsNoTracking()
                 .OrderBy(u => u.Email)
                 .ToListAsync();
 
-            var clients = await _dbContext.Clients
-                .AsNoTracking()
-                .Where(c => c.UserId != null)
-                .Select(c => new { c.UserId, c.FirstName, c.LastName })
-                .ToListAsync();
+            var clients = (await _unitOfWork.Clients.GetAllAsync())
+                .Where(c => !string.IsNullOrWhiteSpace(c.UserId))
+                .Select(c => new { UserId = c.UserId!, c.FirstName, c.LastName })
+                .ToDictionary(c => c.UserId, c => $"{c.FirstName} {c.LastName}".Trim());
 
-            var rolesByUser = await (from ur in _dbContext.UserRoles.AsNoTracking()
-                                     join r in _dbContext.Roles.AsNoTracking() on ur.RoleId equals r.Id
-                                     select new { ur.UserId, RoleName = r.Name })
-                .ToListAsync();
+            var result = new List<AdminEmployeeListItem>(users.Count);
 
-            return users.Select(user =>
+            foreach (var user in users)
             {
-                var client = clients.FirstOrDefault(c => c.UserId == user.Id);
-                var displayName = client is null
-                    ? (user.UserName?.Split('@').FirstOrDefault() ?? "Unknown")
-                    : $"{client.FirstName} {client.LastName}".Trim();
+                var displayName = clients.TryGetValue(user.Id, out var fullName)
+                    ? fullName
+                    : (user.UserName?.Split('@').FirstOrDefault() ?? "Unknown");
 
-                var userRoles = rolesByUser
-                    .Where(r => r.UserId == user.Id)
-                    .Select(r => r.RoleName ?? string.Empty)
-                    .ToList();
+                var userRoles = await _userManager.GetRolesAsync(user);
 
                 var status = userRoles.Contains("Admin", StringComparer.OrdinalIgnoreCase)
                     ? "Admin"
@@ -55,14 +46,16 @@ namespace CarRentalApp.Application.Services
                         ? "Worker"
                         : "Employee";
 
-                return new AdminEmployeeListItem
+                result.Add(new AdminEmployeeListItem
                 {
                     UserId = user.Id,
                     DisplayName = displayName,
                     Email = user.Email ?? user.UserName ?? "N/A",
                     Status = status
-                };
-            }).ToList();
+                });
+            }
+
+            return result;
         }
 
         public async Task<AdminEmployeeOperationResult> UpdateEmployeeStatusAsync(string userId, string status)

@@ -9,6 +9,7 @@ namespace CarRentalApp.Application.InterfacesDTO
         Task<IEnumerable<RentalDto>> GetRentalsByClientIdAsync(int clientId);
         Task<IEnumerable<RentalDto>> GetActiveRentalsAsync();
         Task<IEnumerable<RentalDto>> GetRentalsByCarIdAsync(int carId);
+
         Task<int> CreateRentalAsync(CreateRentalDto rentalDto);
         Task<bool> CompleteRentalAsync(int rentalId);
         Task<bool> CancelRentalAsync(int rentalId);

@@ -1,24 +1,28 @@
 using CarRentalApp.Domain.Interfaces;
-using CarRentalApp.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalApp.Application.Services
 {
     public class AdminClientsService : IAdminClientsService
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public AdminClientsService(ApplicationDbContext dbContext)
+        public AdminClientsService(IUnitOfWork unitOfWork, UserManager<IdentityUser> userManager)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
 
         public async Task<List<AdminClientListItem>> LoadClientsAsync()
         {
-            var clients = await _dbContext.Clients
-                .AsNoTracking()
-                .Include(c => c.Rentals)
-                .ToListAsync();
+            var clients = (await _unitOfWork.Clients.GetAllAsync()).ToList();
+            var rentals = await _unitOfWork.Rentals.GetAllAsync();
+
+            var reservationCountByClientId = rentals
+                .GroupBy(r => r.ClientId)
+                .ToDictionary(g => g.Key, g => g.Count());
 
             var userIds = clients
                 .Select(c => c.UserId)
@@ -27,7 +31,7 @@ namespace CarRentalApp.Application.Services
                 .Distinct()
                 .ToList();
 
-            var emailsByUserId = await _dbContext.Users
+            var emailsByUserId = await _userManager.Users
                 .AsNoTracking()
                 .Where(u => userIds.Contains(u.Id))
                 .Select(u => new { u.Id, u.Email })
@@ -41,7 +45,7 @@ namespace CarRentalApp.Application.Services
                     LastName = c.LastName,
                     DriverLicense = c.DriverLicense,
                     Email = c.UserId is not null && emailsByUserId.TryGetValue(c.UserId, out var email) ? email : "No email",
-                    ReservationCount = c.Rentals.Count
+                    ReservationCount = reservationCountByClientId.TryGetValue(c.Id, out var count) ? count : 0
                 })
                 .OrderBy(c => c.LastName)
                 .ThenBy(c => c.FirstName)
@@ -50,27 +54,24 @@ namespace CarRentalApp.Application.Services
 
         public async Task<AdminClientDetails?> LoadClientDetailsAsync(int clientId)
         {
-            var client = await _dbContext.Clients
-                .AsNoTracking()
-                .Include(c => c.Rentals)
-                    .ThenInclude(r => r.Car)
-                .Include(c => c.Rentals)
-                    .ThenInclude(r => r.RentalPhotos)
-                .FirstOrDefaultAsync(c => c.Id == clientId);
-
+            var client = await _unitOfWork.Clients.GetByIdAsync(clientId);
             if (client is null)
             {
                 return null;
             }
 
+            var rentals = (await _unitOfWork.Rentals.GetRentalsByClientIdAsync(clientId))
+                .OrderByDescending(r => r.Id)
+                .ToList();
+
             var email = string.Empty;
             if (!string.IsNullOrWhiteSpace(client.UserId))
             {
-                email = await _dbContext.Users
+                email = await _userManager.Users
                     .AsNoTracking()
                     .Where(u => u.Id == client.UserId)
                     .Select(u => u.Email ?? string.Empty)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync() ?? string.Empty;
             }
 
             return new AdminClientDetails
@@ -80,8 +81,7 @@ namespace CarRentalApp.Application.Services
                 LastName = client.LastName,
                 DriverLicense = client.DriverLicense,
                 Email = string.IsNullOrWhiteSpace(email) ? "No email" : email,
-                Reservations = client.Rentals
-                    .OrderByDescending(r => r.Id)
+                Reservations = rentals
                     .Select(r => new AdminClientReservationItem
                     {
                         RentalId = r.Id,

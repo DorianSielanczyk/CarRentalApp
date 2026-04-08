@@ -1,32 +1,25 @@
 using CarRentalApp.Domain.Entities.Breakdowns;
 using CarRentalApp.Domain.Interfaces;
-using CarRentalApp.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalApp.Application.Services
 {
     public class AdminBreakdownReportsService : IAdminBreakdownReportsService
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AdminBreakdownReportsService(ApplicationDbContext dbContext)
+        public AdminBreakdownReportsService(IUnitOfWork unitOfWork)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<BreakdownReport>> LoadReportsAsync()
         {
-            return await _dbContext.BreakdownReports
-                .Include(r => r.Rental)!.ThenInclude(x => x!.Car)
-                .Include(r => r.Rental)!.ThenInclude(x => x!.Client)
-                .Include(r => r.Notes)
-                .OrderByDescending(r => r.CreatedAtUtc)
-                .ToListAsync();
+            return await _unitOfWork.BreakdownReports.GetAllWithDetailsAsync();
         }
 
         public async Task<bool> ChangeStatusAsync(int reportId, BreakdownStatus status)
         {
-            var report = await _dbContext.BreakdownReports.FirstOrDefaultAsync(r => r.Id == reportId);
+            var report = await _unitOfWork.BreakdownReports.GetByIdAsync(reportId);
             if (report is null)
             {
                 return false;
@@ -34,7 +27,9 @@ namespace CarRentalApp.Application.Services
 
             report.Status = status;
             report.UpdatedAtUtc = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+
+            _unitOfWork.BreakdownReports.Update(report);
+            await _unitOfWork.SaveChangesAsync();
 
             return true;
         }
@@ -46,13 +41,13 @@ namespace CarRentalApp.Application.Services
                 return false;
             }
 
-            var report = await _dbContext.BreakdownReports.FirstOrDefaultAsync(r => r.Id == reportId);
+            var report = await _unitOfWork.BreakdownReports.GetByIdAsync(reportId);
             if (report is null)
             {
                 return false;
             }
 
-            _dbContext.BreakdownReportNotes.Add(new BreakdownReportNote
+            await _unitOfWork.BreakdownReportNotes.AddAsync(new BreakdownReportNote
             {
                 BreakdownReportId = reportId,
                 Note = note,
@@ -61,8 +56,9 @@ namespace CarRentalApp.Application.Services
             });
 
             report.UpdatedAtUtc = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
+            _unitOfWork.BreakdownReports.Update(report);
 
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
     }

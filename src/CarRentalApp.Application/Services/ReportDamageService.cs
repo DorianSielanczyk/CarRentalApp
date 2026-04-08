@@ -1,10 +1,8 @@
 using CarRentalApp.Domain.Entities;
 using CarRentalApp.Domain.Entities.Breakdowns;
 using CarRentalApp.Domain.Interfaces;
-using CarRentalApp.Infrastructure.Data;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalApp.Application.Services
 {
@@ -12,18 +10,18 @@ namespace CarRentalApp.Application.Services
     {
         private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IWebHostEnvironment _environment;
 
-        public ReportDamageService(ApplicationDbContext dbContext, IWebHostEnvironment environment)
+        public ReportDamageService(IUnitOfWork unitOfWork, IWebHostEnvironment environment)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
             _environment = environment;
         }
 
         public async Task<(List<Rental> ActiveRentals, List<BreakdownReport> History)> LoadDataAsync(string userId)
         {
-            var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
+            var client = await _unitOfWork.Clients.GetClientByUserIdAsync(userId);
             if (client is null)
             {
                 return (new List<Rental>(), new List<BreakdownReport>());
@@ -31,22 +29,17 @@ namespace CarRentalApp.Application.Services
 
             var today = DateTime.Today;
 
-            var activeRentals = await _dbContext.Rentals
-                .Include(r => r.Car)
+            var activeRentals = (await _unitOfWork.Rentals.GetRentalsByClientIdAsync(client.Id))
                 .Where(r =>
-                    r.ClientId == client.Id &&
                     r.Status == "Active" &&
                     r.RentalDate.Date <= today &&
                     r.ReturnDate.Date >= today)
                 .OrderByDescending(r => r.Id)
-                .ToListAsync();
+                .ToList();
 
-            var history = await _dbContext.BreakdownReports
-                .Include(r => r.Rental)!
-                    .ThenInclude(r => r!.Car)
-                .Include(r => r.Notes)
-                .Where(r => r.Rental!.ClientId == client.Id)
-                .ToListAsync();
+            var history = (await _unitOfWork.BreakdownReports.GetAllWithDetailsAsync())
+                .Where(r => r.Rental?.ClientId == client.Id)
+                .ToList();
 
             return (activeRentals, history);
         }
@@ -61,7 +54,7 @@ namespace CarRentalApp.Application.Services
             decimal? longitude,
             IReadOnlyList<IBrowserFile> files)
         {
-            var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
+            var client = await _unitOfWork.Clients.GetClientByUserIdAsync(userId);
             if (client is null)
             {
                 return (false, "Client profile not found.");
@@ -69,10 +62,9 @@ namespace CarRentalApp.Application.Services
 
             var today = DateTime.Today;
 
-            var selectedRental = await _dbContext.Rentals
-                .FirstOrDefaultAsync(r =>
+            var selectedRental = (await _unitOfWork.Rentals.GetRentalsByClientIdAsync(client.Id))
+                .FirstOrDefault(r =>
                     r.Id == selectedRentalId &&
-                    r.ClientId == client.Id &&
                     r.Status == "Active" &&
                     r.RentalDate.Date <= today &&
                     r.ReturnDate.Date >= today);
@@ -95,8 +87,8 @@ namespace CarRentalApp.Application.Services
                 UpdatedAtUtc = DateTime.UtcNow
             };
 
-            _dbContext.BreakdownReports.Add(report);
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.BreakdownReports.AddAsync(report);
+            await _unitOfWork.SaveChangesAsync();
 
             var dir = Path.Combine(_environment.WebRootPath, "images", "breakdowns");
             Directory.CreateDirectory(dir);
@@ -115,7 +107,7 @@ namespace CarRentalApp.Application.Services
                 await using var fs = new FileStream(fullPath, FileMode.Create);
                 await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fs);
 
-                _dbContext.BreakdownReportPhotos.Add(new BreakdownReportPhoto
+                report.Photos.Add(new BreakdownReportPhoto
                 {
                     BreakdownReportId = report.Id,
                     PhotoUrl = $"/images/breakdowns/{name}",
@@ -123,7 +115,9 @@ namespace CarRentalApp.Application.Services
                 });
             }
 
-            await _dbContext.SaveChangesAsync();
+            _unitOfWork.BreakdownReports.Update(report);
+            await _unitOfWork.SaveChangesAsync();
+
             return (true, null);
         }
     }

@@ -29,6 +29,7 @@ namespace CarRentalApp.Infrastructure.Repositories
                     .ThenInclude(c => c.Category)
                 .Include(r => r.Car)
                     .ThenInclude(c => c.CarPhotos)
+                .Include(r => r.RentalPhotos)
                 .Where(r => r.ClientId == clientId)
                 .OrderByDescending(r => r.RentalDate)
                 .ToListAsync();

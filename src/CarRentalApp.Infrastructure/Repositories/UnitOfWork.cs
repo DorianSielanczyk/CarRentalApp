@@ -14,6 +14,9 @@ namespace CarRentalApp.Infrastructure.Repositories
         public IClientRepository Clients { get; }
         public IRentalRepository Rentals { get; }
         public ICarPhotoRepository CarPhotos { get; }
+        public IBreakdownReportRepository BreakdownReports { get; }
+        public IBreakdownReportNoteRepository BreakdownReportNotes { get; }
+        public IRentalPhotoRepository RentalPhotos { get; }
 
         public UnitOfWork(
             ApplicationDbContext context,
@@ -21,7 +24,10 @@ namespace CarRentalApp.Infrastructure.Repositories
             ICategoryRepository categoryRepository,
             IClientRepository clientRepository,
             IRentalRepository rentalRepository,
-            ICarPhotoRepository carPhotoRepository)
+            ICarPhotoRepository carPhotoRepository,
+            IRentalPhotoRepository rentalPhotoRepository,
+            IBreakdownReportRepository breakdownReportRepository,
+            IBreakdownReportNoteRepository breakdownReportNoteRepository)
         {
             _context = context;
             Cars = carRepository;
@@ -29,6 +35,9 @@ namespace CarRentalApp.Infrastructure.Repositories
             Clients = clientRepository;
             Rentals = rentalRepository;
             CarPhotos = carPhotoRepository;
+            RentalPhotos = rentalPhotoRepository;
+            BreakdownReports = breakdownReportRepository;
+            BreakdownReportNotes = breakdownReportNoteRepository;
         }
 
         public async Task<int> SaveChangesAsync()

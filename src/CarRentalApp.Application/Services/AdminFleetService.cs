@@ -1,31 +1,25 @@
 using CarRentalApp.Domain.Entities;
 using CarRentalApp.Domain.Interfaces;
-using CarRentalApp.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace CarRentalApp.Application.Services
 {
     public class AdminFleetService : IAdminFleetService
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AdminFleetService(ApplicationDbContext dbContext)
+        public AdminFleetService(IUnitOfWork unitOfWork)
         {
-            _dbContext = dbContext;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<AdminFleetCarListItem>> LoadCarsAsync()
         {
             var today = DateTime.Today;
 
-            var cars = await _dbContext.Cars
-                .AsNoTracking()
-                .Include(c => c.Category)
-                .Include(c => c.Rentals)
-                .Include(c => c.CarPhotos)
+            var cars = (await _unitOfWork.Cars.GetAllAsync())
                 .OrderBy(c => c.Brand)
                 .ThenBy(c => c.Model)
-                .ToListAsync();
+                .ToList();
 
             return cars.Select(car =>
             {
@@ -62,24 +56,21 @@ namespace CarRentalApp.Application.Services
 
         public async Task<List<AdminFleetCategoryItem>> LoadCategoriesAsync()
         {
-            return await _dbContext.Categories
-                .AsNoTracking()
+            var categories = await _unitOfWork.Categories.GetAllAsync();
+
+            return categories
                 .OrderBy(c => c.Name)
                 .Select(c => new AdminFleetCategoryItem
                 {
                     CategoryId = c.Id,
                     Name = c.Name
                 })
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<AdminFleetCarFormModel?> GetCarForEditAsync(int carId)
         {
-            var car = await _dbContext.Cars
-                .AsNoTracking()
-                .Include(c => c.CarPhotos)
-                .FirstOrDefaultAsync(c => c.Id == carId);
-
+            var car = await _unitOfWork.Cars.GetCarWithDetailsAsync(carId);
             if (car is null)
             {
                 return null;
@@ -118,7 +109,7 @@ namespace CarRentalApp.Application.Services
         {
             var normalizedReg = model.RegistrationNumber.Trim().ToUpperInvariant();
 
-            var regExists = await _dbContext.Cars
+            var regExists = await _unitOfWork.Cars
                 .AnyAsync(c => c.RegistrationNumber.ToUpper() == normalizedReg);
 
             if (regExists)
@@ -162,16 +153,14 @@ namespace CarRentalApp.Application.Services
                 });
             }
 
-            await _dbContext.Cars.AddAsync(car);
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.Cars.AddAsync(car);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UpdateCarAsync(AdminFleetCarFormModel model)
         {
-            var car = await _dbContext.Cars
-                .Include(c => c.CarPhotos)
-                .FirstOrDefaultAsync(c => c.Id == model.Id);
+            var car = await _unitOfWork.Cars.GetCarWithDetailsAsync(model.Id);
             if (car is null)
             {
                 return false;
@@ -179,7 +168,7 @@ namespace CarRentalApp.Application.Services
 
             var normalizedReg = model.RegistrationNumber.Trim().ToUpperInvariant();
 
-            var regExists = await _dbContext.Cars
+            var regExists = await _unitOfWork.Cars
                 .AnyAsync(c => c.Id != model.Id && c.RegistrationNumber.ToUpper() == normalizedReg);
 
             if (regExists)
@@ -204,7 +193,7 @@ namespace CarRentalApp.Application.Services
 
                 if (photosToDelete.Count > 0)
                 {
-                    _dbContext.CarPhotos.RemoveRange(photosToDelete);
+                    _unitOfWork.CarPhotos.RemoveRange(photosToDelete);
 
                     foreach (var photo in photosToDelete)
                     {
@@ -263,7 +252,27 @@ namespace CarRentalApp.Application.Services
                 car.CarPhotos.OrderBy(p => p.Id).First().IsMain = true;
             }
 
-            await _dbContext.SaveChangesAsync();
+            _unitOfWork.Cars.Update(car);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteCarAsync(int carId)
+        {
+            var car = await _unitOfWork.Cars.GetByIdAsync(carId);
+            if (car is null)
+            {
+                return false;
+            }
+
+            var hasRentals = await _unitOfWork.Rentals.AnyAsync(r => r.CarId == carId);
+            if (hasRentals)
+            {
+                return false;
+            }
+
+            _unitOfWork.Cars.Remove(car);
+            await _unitOfWork.SaveChangesAsync();
             return true;
         }
 
@@ -280,25 +289,6 @@ namespace CarRentalApp.Application.Services
                 .Where(p => !string.IsNullOrWhiteSpace(p))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
-        }
-
-        public async Task<bool> DeleteCarAsync(int carId)
-        {
-            var car = await _dbContext.Cars.FirstOrDefaultAsync(c => c.Id == carId);
-            if (car is null)
-            {
-                return false;
-            }
-
-            var hasRentals = await _dbContext.Rentals.AnyAsync(r => r.CarId == carId);
-            if (hasRentals)
-            {
-                return false;
-            }
-
-            _dbContext.Cars.Remove(car);
-            await _dbContext.SaveChangesAsync();
-            return true;
         }
     }
 }

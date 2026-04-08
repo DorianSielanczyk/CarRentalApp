@@ -13,7 +13,10 @@ namespace CarRentalApp.Domain.Interfaces
         IClientRepository Clients { get; }
         IRentalRepository Rentals { get; }
         ICarPhotoRepository CarPhotos { get; }
-        
+        IRentalPhotoRepository RentalPhotos { get; }
+        IBreakdownReportRepository BreakdownReports { get; }
+        IBreakdownReportNoteRepository BreakdownReportNotes { get; }
+
         Task<int> SaveChangesAsync();
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();

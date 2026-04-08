@@ -40,7 +40,10 @@ namespace CarRentalApp.Infrastructure
             services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<IRentalRepository, RentalRepository>();
             services.AddScoped<ICarPhotoRepository, CarPhotoRepository>();
-            
+            services.AddScoped<IBreakdownReportRepository, BreakdownReportRepository>();
+            services.AddScoped<IBreakdownReportNoteRepository, BreakdownReportNoteRepository>();
+            services.AddScoped<IRentalPhotoRepository, RentalPhotoRepository>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddAuthorization();

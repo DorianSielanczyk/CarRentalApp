@@ -18,7 +18,7 @@ namespace CarRentalApp.Application.Services
         {
             var rentals = await _unitOfWork.Rentals.GetAllAsync();
             return rentals.Select(MapToDto);
-        }
+        }   
 
         public async Task<RentalDto?> GetRentalByIdAsync(int id)
         {
