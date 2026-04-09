@@ -43,12 +43,12 @@
                     
                     <MudItem xs="6">
                         <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Pickup Date</MudText>
-                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(StartDate == default ? "N/A" : StartDate.ToString("MMM dd, yyyy"))</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(StartDate == default ? "N/A" : StartDate.ToString("MMM dd, yyyy", new System.Globalization.CultureInfo("en-US")))</MudText>
                     </MudItem>
                     
                     <MudItem xs="6">
                         <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.6);">Return Date</MudText>
-                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(EndDate == default ? "N/A" : EndDate.ToString("MMM dd, yyyy"))</MudText>
+                        <MudText Typo="Typo.body1" Style="color: rgba(255, 255, 255, 0.9); font-weight: 500;">@(EndDate == default ? "N/A" : EndDate.ToString("MMM dd, yyyy", new System.Globalization.CultureInfo("en-US")))</MudText>
                     </MudItem>
                     
                     <MudItem xs="12">
