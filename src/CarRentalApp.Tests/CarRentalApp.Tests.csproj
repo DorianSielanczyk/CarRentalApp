@@ -4,7 +4,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -19,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\CarRentalApp.Application\CarRentalApp.Application.csproj" />
-    <ProjectReference Include="..\src\CarRentalApp.Domain\CarRentalApp.Domain.csproj" />
+    <ProjectReference Include="..\CarRentalApp.Application\CarRentalApp.Application.csproj" />
+    <ProjectReference Include="..\CarRentalApp.Domain\CarRentalApp.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
