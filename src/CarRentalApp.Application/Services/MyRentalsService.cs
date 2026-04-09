@@ -102,7 +102,7 @@ namespace CarRentalApp.Application.Services
         private static bool CanCancelReservation(Rental rental)
         {
             return rental.Status == "Active"
-                && (rental.RentalDate.Date - DateTime.Today).TotalDays > 7;
+                && (rental.RentalDate.Date - DateTime.Today).TotalDays > 7; 
         }
     }
 }
