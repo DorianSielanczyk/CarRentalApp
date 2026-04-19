@@ -1,0 +1,171 @@
+@using System.Globalization
+@using MudBlazor
+
+<MudDialog Style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background-color: rgba(41, 37, 33, 0.95); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+    <TitleContent>
+        <div style="background: #1C1917; padding: 1rem; margin: -24px -24px 0 -24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <MudText Typo="Typo.h6" Style="color: white; font-weight: 600;">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Class="me-2" />
+                Select date range
+            </MudText>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="mb-3">
+            <label class="form-label home-date-label">From</label>
+            <input type="date"
+                   class="form-control home-date-native-input"
+                   value="@startDateText"
+                   @onchange="OnStartDateChanged" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label home-date-label">To</label>
+            <input type="date"
+                   class="form-control home-date-native-input"
+                   value="@endDateText"
+                   @onchange="OnEndDateChanged" />
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(validationMessage))
+        {
+            <small class="text-danger">@validationMessage</small>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Text"
+                   OnClick="Cancel"
+                   Style="color: #dc3545; text-transform: uppercase; font-weight: 500;">
+            Cancel
+        </MudButton>
+
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   Disabled="@(!CanApply)"
+                   OnClick="Apply"
+                   Style="background-color: #217418; color: white; text-transform: uppercase; font-weight: 500;">
+            Apply
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .home-date-label {
+        color: #ffffff;
+    }
+
+    .home-date-native-input {
+        color: #ffffff !important;
+        background-color: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.75) !important;
+        caret-color: #ffffff;
+    }
+
+    .home-date-native-input:focus,
+    .home-date-native-input:active,
+    .home-date-native-input:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+        border-color: #ffffff !important;
+    }
+
+    .home-date-native-input::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public DateTime? StartDate { get; set; }
+
+    [Parameter]
+    public DateTime? EndDate { get; set; }
+
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string validationMessage = string.Empty;
+
+    private string startDateText => startDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty;
+    private string endDateText => endDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private bool CanApply =>
+        startDate.HasValue &&
+        endDate.HasValue &&
+        string.IsNullOrWhiteSpace(validationMessage);
+
+    protected override void OnInitialized()
+    {
+        startDate = StartDate?.Date;
+        endDate = EndDate?.Date;
+        ValidateRange();
+    }
+
+    private void OnStartDateChanged(ChangeEventArgs e)
+    {
+        startDate = ParseDate(e.Value?.ToString());
+        ValidateRange();
+    }
+
+    private void OnEndDateChanged(ChangeEventArgs e)
+    {
+        endDate = ParseDate(e.Value?.ToString());
+        ValidateRange();
+    }
+
+    private static DateTime? ParseDate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return DateTime.TryParseExact(
+            value,
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out var parsed)
+            ? parsed.Date
+            : null;
+    }
+
+    private void ValidateRange()
+    {
+        validationMessage = string.Empty;
+
+        if (!startDate.HasValue || !endDate.HasValue)
+        {
+            return;
+        }
+
+        if (startDate.Value.Date < DateTime.Today)
+        {
+            validationMessage = "Start date cannot be in the past.";
+            return;
+        }
+
+        if (endDate.Value.Date < startDate.Value.Date)
+        {
+            validationMessage = "End date must be greater than or equal to start date.";
+        }
+    }
+
+    private void Apply()
+    {
+        if (!CanApply)
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(new DateRange(startDate, endDate)));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

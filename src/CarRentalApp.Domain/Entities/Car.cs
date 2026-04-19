@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CarRentalApp.Domain.Entities
+﻿namespace CarRentalApp.Domain.Entities
 {
     public class Car
     {

@@ -1,13 +1,14 @@
 ﻿@page "/"
-@using CarRentalApp.Application.InterfacesDTO
 @rendermode InteractiveServer
 @inject ICarService CarService
 @inject ICategoryService CategoryService
+@inject IRentalService RentalService
+@inject IDialogService DialogService
 @inject NavigationManager Navigation
 
 <div class="filter-header">
     <div class="container">
-        <div class="row g-3 align-items-center">
+        <div class="row g-2 align-items-center">
             <div class="col-md-3">
                 <input type="text" class="form-control" placeholder="Search by brand or model..." @bind="searchQuery" @bind:event="oninput" @bind:after="OnSearchChanged" />
             </div>
@@ -23,8 +24,7 @@
                     }
                 </select>
             </div>
-
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select class="form-select" @bind="selectedPriceRange" @bind:after="OnFilterChanged">
                     <option value="all">Any Price</option>
                     <option value="0-50">Under $50/day</option>
@@ -33,12 +33,31 @@
                     <option value="150+">Over $150/day</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
+            <div class="col-md-2">
+                <button class="btn btn-outline-filter-date btn-sm w-100 home-date-filter-btn" @onclick="OpenDateRangeDialogAsync">
+                    <i class="bi bi-calendar-range"></i> Select Date
+                </button>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary btn-sm w-100 home-clear-filter-btn" @onclick="ClearFilters">
                     <i class="bi bi-x-circle"></i> Clear Filters
                 </button>
             </div>
         </div>
+
+        @if (selectedStartDate.HasValue && selectedEndDate.HasValue)
+        {
+            <div class="row mt-2">
+                <div class="col-12">
+                    <small class="text-muted">
+                        Availability range:
+                        <strong>@selectedStartDate.Value.ToString("dd.MM.yyyy")</strong>
+                        -
+                        <strong>@selectedEndDate.Value.ToString("dd.MM.yyyy")</strong>
+                    </small>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -178,6 +197,10 @@
         .Take(PageSize)
         .ToList();
 
+    private DateTime? selectedStartDate;
+    private DateTime? selectedEndDate;
+    private HashSet<int> unavailableCarIdsInRange = new();
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -196,6 +219,7 @@
             var categoriesResult = await CategoryService.GetAllCategoriesAsync();
             categories = categoriesResult?.ToList() ?? new List<CategoryDto>();
 
+            await RefreshAvailabilityForSelectedRangeAsync();
             ApplyFilters();
         }
         catch (Exception ex)
@@ -267,6 +291,11 @@
                 break;
         }
 
+        if (selectedStartDate.HasValue && selectedEndDate.HasValue)
+        {
+            query = query.Where(car => car.IsAvailable && !unavailableCarIdsInRange.Contains(car.Id));
+        }
+
         filteredCars = query.ToList();
 
         if (currentPage > TotalPages)
@@ -280,6 +309,9 @@
         searchQuery = string.Empty;
         selectedCategoryId = 0;
         selectedPriceRange = "all";
+        selectedStartDate = null;
+        selectedEndDate = null;
+        unavailableCarIdsInRange.Clear();
         currentPage = 1;
         ApplyFilters();
     }
@@ -298,5 +330,71 @@
         }
 
         Navigation.NavigateTo($"/booking/{carId}");
+    }
+
+    private async Task OpenDateRangeDialogAsync()
+    {
+        try
+        {
+            var parameters = new DialogParameters
+            {
+                ["StartDate"] = selectedStartDate,
+                ["EndDate"] = selectedEndDate
+            };
+
+            var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                CloseButton = false,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Small,
+                Position = DialogPosition.Center
+            };
+
+            var dialog = await DialogService.ShowAsync<HomeDateRangeDialog>("Select Date", parameters, options);
+            var result = await dialog.Result;
+
+            if (result.Canceled)
+            {
+                return;
+            }
+
+            if (result.Data is DateRange range)
+            {
+                selectedStartDate = range.Start;
+                selectedEndDate = range.End;
+
+                await RefreshAvailabilityForSelectedRangeAsync();
+                currentPage = 1;
+                ApplyFilters();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Date dialog failed to open: {ex.Message}";
+        }
+    }
+
+    private async Task RefreshAvailabilityForSelectedRangeAsync()
+    {
+        unavailableCarIdsInRange.Clear();
+
+        if (!selectedStartDate.HasValue || !selectedEndDate.HasValue)
+        {
+            return;
+        }
+
+        var start = selectedStartDate.Value.Date;
+        var end = selectedEndDate.Value.Date;
+
+        var activeRentals = await RentalService.GetActiveRentalsAsync();
+
+        unavailableCarIdsInRange = activeRentals
+            .Where(r =>
+                r.Status != "Cancelled" &&
+                r.RentalDate.Date <= end &&
+                r.ReturnDate.Date >= start)
+            .Select(r => r.CarId)
+            .ToHashSet();
     }
 }

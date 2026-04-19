@@ -127,6 +127,36 @@
     color: #ffffff !important;
 }
 
+.home-date-filter-btn,
+.home-clear-filter-btn {
+    min-height: 38px;
+}
+
+.btn-outline-filter-date {
+    color: #292524;
+    border-color: #292524;
+    background-color: transparent;
+}
+
+.btn-outline-filter-date:hover {
+    background-color: #686868;
+    border-color: #686868;
+    color: white;
+}
+
+.btn-outline-filter-date:focus,
+.btn-outline-filter-date:active,
+.btn-outline-filter-date:focus-visible,
+.home-date-filter-btn:focus,
+.home-date-filter-btn:active,
+.home-date-filter-btn:focus-visible,
+.home-clear-filter-btn:focus,
+.home-clear-filter-btn:active,
+.home-clear-filter-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
 @media (max-width: 768px) {
     .hero-section {
         min-height: auto;
