@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Worker,Admin")]
 @inject IAdminFleetService AdminFleetService
 @inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="clients-header">
     <div class="container">
@@ -120,9 +121,13 @@
                                 <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenEditDialogAsync(car.CarId)">
                                     Edit data
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm" @onclick="() => OpenDeleteDialogAsync(car.CarId, GetCarName(car))">
-                                    Delete car
-                                </button>
+
+                                @if (isAdmin || !car.HasReservationHistory)
+                                {
+                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => OpenDeleteDialogAsync(car.CarId, GetCarName(car))">
+                                        Delete car
+                                    </button>
+                                }
                             </div>
                         </div>
                     </div>
@@ -160,6 +165,9 @@
     private int selectedCategoryId;
     private string selectedPriceRange = "all";
     private int currentPage = 1;
+
+    private bool canDeleteCars;
+    private bool isAdmin;
 
     private string SearchQuery
     {
@@ -208,6 +216,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAdmin = authState.User.IsInRole("Admin");
+
         await LoadDataAsync();
     }
 
@@ -350,9 +361,11 @@
             return;
         }
 
-        var ok = await AdminFleetService.DeleteCarAsync(carId);
+        var ok = await AdminFleetService.DeleteCarAsync(carId, isAdmin);
         feedbackError = !ok;
-        feedbackMessage = ok ? "Car deleted successfully." : "Cannot delete car. It may have rentals assigned.";
+        feedbackMessage = ok
+            ? "Car deleted successfully."
+            : "Workers can delete only cars without reservation history.";
         await LoadDataAsync();
     }
 

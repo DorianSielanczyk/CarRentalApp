@@ -14,6 +14,7 @@ namespace CarRentalApp.Infrastructure.Repositories
         public override async Task<IEnumerable<Car>> GetAllAsync()
         {
             return await _dbSet
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)
@@ -25,6 +26,7 @@ namespace CarRentalApp.Infrastructure.Repositories
             var today = DateTime.Today;
 
             return await _dbSet
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)
@@ -40,6 +42,7 @@ namespace CarRentalApp.Infrastructure.Repositories
         public async Task<IEnumerable<Car>> GetCarsByCategoryAsync(int categoryId)
         {
             return await _dbSet
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)
@@ -50,6 +53,7 @@ namespace CarRentalApp.Infrastructure.Repositories
         public async Task<IEnumerable<Car>> GetCarsByPriceRangeAsync(decimal minPrice, decimal maxPrice)
         {
             return await _dbSet
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)
@@ -60,6 +64,7 @@ namespace CarRentalApp.Infrastructure.Repositories
         public async Task<Car?> GetCarWithDetailsAsync(int carId)
         {
             return await _dbSet
+                .Where(c => !c.IsDeleted)
                 .Include(c => c.Category)
                 .Include(c => c.CarPhotos)
                 .Include(c => c.Rentals)

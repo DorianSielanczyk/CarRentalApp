@@ -28,6 +28,8 @@ namespace CarRentalApp.Application.Services
                     r.RentalDate.Date <= today &&
                     r.ReturnDate.Date >= today);
 
+                var hasReservationHistory = car.Rentals.Any();
+
                 var status = isRented
                     ? "Rented"
                     : car.IsAvailable ? "Available" : "Unavailable";
@@ -49,7 +51,8 @@ namespace CarRentalApp.Application.Services
                     Mileage = car.Mileage,
                     IsAvailable = car.IsAvailable,
                     CategoryName = car.Category?.Name ?? "N/A",
-                    Status = status
+                    Status = status,
+                    HasReservationHistory = hasReservationHistory
                 };
             }).ToList();
         }
@@ -110,7 +113,7 @@ namespace CarRentalApp.Application.Services
             var normalizedReg = model.RegistrationNumber.Trim().ToUpperInvariant();
 
             var regExists = await _unitOfWork.Cars
-                .AnyAsync(c => c.RegistrationNumber.ToUpper() == normalizedReg);
+                .AnyAsync(c => !c.IsDeleted && c.RegistrationNumber.ToUpper() == normalizedReg);
 
             if (regExists)
             {
@@ -169,7 +172,7 @@ namespace CarRentalApp.Application.Services
             var normalizedReg = model.RegistrationNumber.Trim().ToUpperInvariant();
 
             var regExists = await _unitOfWork.Cars
-                .AnyAsync(c => c.Id != model.Id && c.RegistrationNumber.ToUpper() == normalizedReg);
+                .AnyAsync(c => c.Id != model.Id && !c.IsDeleted && c.RegistrationNumber.ToUpper() == normalizedReg);
 
             if (regExists)
             {
@@ -257,7 +260,7 @@ namespace CarRentalApp.Application.Services
             return true;
         }
 
-        public async Task<bool> DeleteCarAsync(int carId)
+        public async Task<bool> DeleteCarAsync(int carId, bool isAdmin)
         {
             var car = await _unitOfWork.Cars.GetByIdAsync(carId);
             if (car is null)
@@ -265,13 +268,17 @@ namespace CarRentalApp.Application.Services
                 return false;
             }
 
-            var hasRentals = await _unitOfWork.Rentals.AnyAsync(r => r.CarId == carId);
-            if (hasRentals)
+            var hasReservationHistory = await _unitOfWork.Rentals.AnyAsync(r => r.CarId == carId);
+
+            if (!isAdmin && hasReservationHistory)
             {
                 return false;
             }
 
-            _unitOfWork.Cars.Remove(car);
+            car.IsDeleted = true;
+            car.IsAvailable = false;
+
+            _unitOfWork.Cars.Update(car);
             await _unitOfWork.SaveChangesAsync();
             return true;
         }

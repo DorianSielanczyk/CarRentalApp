@@ -9,7 +9,7 @@ namespace CarRentalApp.Domain.Interfaces
         Task<AdminFleetCarFormModel?> GetCarForEditAsync(int carId);
         Task<bool> AddCarAsync(AdminFleetCarFormModel model);
         Task<bool> UpdateCarAsync(AdminFleetCarFormModel model);
-        Task<bool> DeleteCarAsync(int carId);
+        Task<bool> DeleteCarAsync(int carId, bool isAdmin);
     }
 
     public sealed class AdminFleetCarListItem
@@ -26,6 +26,7 @@ namespace CarRentalApp.Domain.Interfaces
         public bool IsAvailable { get; set; }
         public string CategoryName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public bool HasReservationHistory { get; set; }
     }
 
     public sealed class AdminFleetCategoryItem
