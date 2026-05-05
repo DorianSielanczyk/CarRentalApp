@@ -84,7 +84,7 @@ To run this application, make sure you have the following tools installed:
    
 2. Open the solution file in your preferred IDE (Visual Studio or JetBrains Rider).
 
-3. Ensure that the `DefaultConnection` in appsettings.json points to your local SQL Server instance.
+3. Ensure that the `DefaultConnection` in appsettings.Development.json points to your local SQL Server instance.
 
 4. Set `CarRentalApp.WebUI.Server` as your startup project in Visual Studio.
 
