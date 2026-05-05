@@ -1,6 +1,5 @@
 <a id="readme-top"></a>
 
-<br />
 <div align="center">
 <h1 align="center">Car Rental App</h1>
 
@@ -18,8 +17,6 @@
     It provides a smooth booking experience for clients, while giving employees a set of powerful tools to manage cars, track reservations, and handle damage reports.
   </p>
 </div>
-
-<div align="center">
 
   ### Homepage
   <img src="https://github.com/user-attachments/assets/ad33a83d-8e56-412d-9091-f9e5cd9b5d25" alt="Homepage Screenshot" width="100%" style="border: 1px solid #ddd; border-radius: 8px;" />
